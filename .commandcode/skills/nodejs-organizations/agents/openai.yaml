@@ -1,0 +1,4 @@
+interface:
+  display_name: "Node.js Organizations"
+  short_description: "Build secure organizations, teams, and tenant RBAC"
+  default_prompt: "Use $nodejs-organizations to implement or review organization membership, invitations, teams, roles, permissions, and tenant isolation in this Node.js backend."

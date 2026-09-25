@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan Project"
+  short_description: "Interview users and define a project before implementation"
+  default_prompt: "Use $plan-project to interview me about my project, resolve important product and technical decisions, and prepare a validated specification before creating an implementation plan."

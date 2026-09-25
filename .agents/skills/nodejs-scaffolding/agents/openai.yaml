@@ -1,0 +1,4 @@
+interface:
+  display_name: "Node.js Scaffolding"
+  short_description: "Scaffold compact TypeScript Express APIs"
+  default_prompt: "Use $nodejs-scaffolding to scaffold a TypeScript Express API with a health route."

@@ -1,0 +1,44 @@
+# Taste
+- Keeps server/API code in a dedicated top-level `backend/` folder. Confidence: 0.7
+- Prefers minimal scaffolds: explicitly scopes out features that weren't asked for (e.g. "no auth"); don't add extra subsystems unprompted. Confidence: 0.7
+- Drives work through slash-command skills (e.g. `/nodejs-scaffolding`) with short, terse instructions. Confidence: 0.7
+- Explicitly maps each subsystem to the skill that should build it (auth → scaffolding skill, orgs → organizations skill, etc.) — follow that mapping rather than improvising. Confidence: 0.7
+- Wants a planning pass (`/plan-project`) before implementation on larger features. Confidence: 0.7
+- Supplies visual mockups in a `_designs` folder and expects them to be read as the spec/scope source. Confidence: 0.8
+- Provides an explicit design-token color palette (primary/foreground/background/muted/border/ring, etc.) up front; use those exact tokens. Confidence: 0.8
+- Node.js APIs in TypeScript (Express-style) are the default backend stack. Confidence: 0.6
+- Frontend default: React + Vite with Tailwind CSS and shadcn/ui. Confidence: 0.8
+- This project's shadcn/ui is the Radix-UI variant (uses `asChild` + child-element pattern, NOT Base UI's `render` prop). Reach for `asChild` and put the link/button element as the child of shadcn primitives. Confidence: 0.85
+- References `@AGENTS.md` (and similar root-level convention files) when starting work — expects the agent to read it for project rules and survey current app state/recent changes before implementing. Confidence: 0.8
+- Writes terse, slightly typo-prone imperatives ("Let create...", "use shadcn ui sidebar and other component") — interpret intent generously and just execute; don't ask for clarification on minor phrasing. Confidence: 0.75
+- Prioritizes quick, focused UI refinements when an interface already exists; improve the current implementation rather than rebuilding it unnecessarily. Confidence: 0.75
+- Expects close visual fidelity to supplied UI references, including small spacing and control-component details; use established shared components (such as Avatar) instead of improvised substitutes. Confidence: 0.8
+- Strongly values cost- and time-efficient execution: act quickly and avoid unnecessary exploratory or chat steps on straightforward requests. Confidence: 0.85
+- MongoDB is the default database; Passport with cookie-based JWT auth. Confidence: 0.8
+- Reaches for managed third-party services for hard subsystems: Liveblocks (realtime/collab), Resend (transactional email), Vercel AI SDK (AI features). Confidence: 0.7
+- Expects skills to be verified by listing the `.commandcode/skills` directory, not by trusting `skills-lock.json` — corrects claims that a skill is "missing" without checking disk. Confidence: 0.8
+- Wants locally installed skills and their `references/` read as the primary source before falling back to web docs. Confidence: 0.75
+- Invokes several slash-command skills at once and expects work to continue through all of them in one pass. Confidence: 0.7
+- Approves plans with a terse "yes" and expects the plan to be persisted as a dated markdown file under `docs/plans/` in the repo (not just shown in chat), with a link added from a root `AGENTS.md`. Confidence: 0.65
+- Scopes requests with `@folder` mentions (e.g. `@client`, `@_designs`) — treat the mentioned directory as the working scope for that task. Confidence: 0.65
+- Frontend data/stack defaults beyond React+Vite+Tailwind+shadcn: React Router, TanStack React Query, axios, lucide-react, Zod, React Hook Form (+ `@hookform/resolvers`). Confidence: 0.85
+- Wants a single shared axios instance in `src/lib/axios-client.ts`, exported as `API`, configured with `withCredentials: true` (cookie auth). Confidence: 0.85
+- Wants all HTTP endpoint calls centralized in `src/lib/api.ts` as named functions with `...MutationFn` / `...QueryFn` suffixes (e.g. `loginMutationFn`, `getCurrentUserQueryFn`) rather than inline fetches in components. Confidence: 0.85
+- Wants shared TypeScript types in a dedicated `src/types/` folder (split by domain with a barrel `index.ts`). Confidence: 0.8
+- Wants SVG-as-React-component support enabled in Vite apps (e.g. `vite-plugin-svgr`), and brand assets (logo/favicon) wrapped in a reusable `Logo` component. Confidence: 0.75
+- Asks for features in vertical slices of screens (auth: register → onboarding → sign-in) with the exact dependency list and file layout spelled out; follow the requested structure literally. Confidence: 0.7
+- Expects implementation plans to be detailed and phased (numbered phases with checkboxes, per-phase "done when" criteria, data model, permission matrix, assumptions, and open risks). Confidence: 0.65
+- Uses Mongoose as the MongoDB ODM for backend models (prefers it over the raw driver). Confidence: 0.7
+- Configures the backend through environment variables in `.env` / `.env.example` (e.g. `MONGO_URI`) rather than hard-coding secrets or connection strings. Confidence: 0.6
+- References plan docs via `@docs/plans/*.md` mentions and expects the agent to read that file as the authoritative spec for what to build rather than re-asking for scope. Confidence: 0.7
+- Wraps multi-write database operations (e.g. workspace creation plus its owner membership and audit event) in a Mongoose transaction for atomicity, and maps duplicate-key (11000) races to a clean ConflictException. Confidence: 0.75
+- Prefers client-side auth route guards: a `ProtectedRoute` wrapper for authenticated-only pages and a `PublicRoute` wrapper that redirects authenticated users away from sign-in/sign-up. Confidence: 0.75
+- Prefers workspace-scoped dashboard routing (`/dashboard/org/:workspaceId` as the workspace base with sub-routes like `/team`), and `/dashboard` should resolve to the user's own (first) workspace or onboarding if they have none. Confidence: 0.7
+- When asked to read or review changes, wants read-only analysis — explicitly says "don't edit"; don't make changes unless asked. Confidence: 0.6
+- Prefers submit buttons in create dialogs/forms to show a loading spinner and be disabled while the API call is in flight, and the dialog must stay open until the API succeeds (on failure, keep it open and surface the error). Confidence: 0.85
+- Prefers user-facing copy to reflect real authenticated-user data (e.g. a greeting showing the logged-in user's first name) rather than hardcoded placeholder values. Confidence: 0.7
+- When reporting a bug, names the specific account/workspace to reproduce against and expects the agent to verify against actual data (e.g. query the DB) rather than guess from code. Confidence: 0.6
+- Prefers dedicated empty states for empty lists/containers (e.g. a teams sidebar) rather than rendering nothing. Confidence: 0.7
+they have none. Confidence: 0.7
+- When asked to read or review changes, wants read-only analysis — explicitly says "don't edit"; don't make changes unless asked. Confidence: 0.6
+eview changes, wants read-only analysis — explicitly says "don't edit"; don't make changes unless asked. Confidence: 0.6

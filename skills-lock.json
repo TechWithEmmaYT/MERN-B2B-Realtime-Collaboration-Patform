@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "skills": {
+    "agent-email-inbox": {
+      "source": "resend/resend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/agent-email-inbox/SKILL.md",
+      "computedHash": "e33f2863d24a5a4b96d8bc548a26f757c893b70db97034349973b381f6ed670d"
+    },
+    "email-best-practices": {
+      "source": "resend/resend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/email-best-practices/SKILL.md",
+      "computedHash": "cf53e0d7ad72c440818c64a104ab220f527f26f10c7d8163fa99e066bf747eed"
+    },
+    "liveblocks-best-practices": {
+      "source": "liveblocks/skills",
+      "sourceType": "github",
+      "skillPath": "skills/liveblocks-best-practices/SKILL.md",
+      "computedHash": "df4f54f66e81c580d25c5fee989768368837df694ab63c0f4a0fd70500cd16af"
+    },
+    "nodejs-organizations": {
+      "source": "TechWithEmmaYT/TechwithEmma-Skills",
+      "sourceType": "github",
+      "skillPath": "skills/nodejs-organizations/SKILL.md",
+      "computedHash": "ebc885be75d59d75aa7e4342f9fcba356128165e249b27374dc1406a5e3802c0"
+    },
+    "nodejs-scaffolding": {
+      "source": "TechWithEmmaYT/TechwithEmma-Skills",
+      "sourceType": "github",
+      "skillPath": "skills/nodejs-scaffolding/SKILL.md",
+      "computedHash": "0eabe9fc60af6546b1dd94d3a2c6147f3b3510760f0eeb9a4f0ec7751a8c7c36"
+    },
+    "plan-project": {
+      "source": "TechWithEmmaYT/TechwithEmma-Skills",
+      "sourceType": "github",
+      "skillPath": "skills/plan-project/SKILL.md",
+      "computedHash": "28419b501c9e5c6574ebcdc885752298ad54b34df02a258ca4de7e2e3b0dcfe4"
+    },
+    "react-email": {
+      "source": "resend/resend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-email/SKILL.md",
+      "computedHash": "1d2afbc631670c6bc23e90d0d4776d25f08eabed4bac72485bf06aea1f91ae89"
+    },
+    "resend": {
+      "source": "resend/resend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/resend/SKILL.md",
+      "computedHash": "f501c67f4f598480082c3b62f05ba7d0b9a13ef242c5d8f8bfc1090135f31ecd"
+    }
+  }
+}
