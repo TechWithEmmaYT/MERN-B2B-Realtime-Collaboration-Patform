@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { CheckIcon, ChevronsUpDownIcon, PlusIcon } from 'lucide-react'
+import { CheckIcon, ChevronsUpDownIcon, PlusIcon, Settings2Icon } from 'lucide-react'
 import { useNavigate } from 'react-router'
 
 import {
@@ -71,6 +71,14 @@ export function WorkspaceSwitcher({ workspaceId }: { workspaceId?: string }) {
                   {workspace.id === current.id && <CheckIcon className="ml-auto" />}
                 </DropdownMenuItem>
               ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="gap-2.5 py-2"
+                onSelect={() => navigate(`/dashboard/org/${current.id}/settings/members`)}
+              >
+                <Settings2Icon className="size-4 text-muted-foreground" />
+                Settings &amp; members
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="gap-2.5 py-2"

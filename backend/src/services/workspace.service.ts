@@ -5,7 +5,7 @@ import { Membership } from "../models/membership.model";
 import { Team } from "../models/team.model";
 import { TeamMembership } from "../models/team-membership.model";
 import { Workspace } from "../models/workspace.model";
-import { ConflictException } from "../utils/app-error";
+import { ConflictException, NotFoundException } from "../utils/app-error";
 import type { WorkspaceIconColor, WorkspaceIconType } from "../types/roles";
 
 const slugify = (value: string): string =>
@@ -128,4 +128,73 @@ export const createWorkspace = async (
   } finally {
     await session.endSession();
   }
+};
+
+type WorkspaceSettingsInput = {
+  name?: string;
+  slug?: string;
+  iconType?: WorkspaceIconType;
+  iconValue?: string;
+  iconColor?: WorkspaceIconColor;
+};
+
+/** Workspace details for the settings screen, including the caller's role. */
+export const getWorkspaceSettings = async (workspaceId: string, userId: string) => {
+  const workspace = await Workspace.findById(workspaceId);
+  if (!workspace) throw new NotFoundException("Workspace not found");
+
+  const membership = await Membership.findOne({ workspaceId, userId });
+
+  return {
+    id: workspace._id.toString(),
+    name: workspace.name,
+    slug: workspace.slug,
+    iconType: workspace.iconType,
+    iconValue: workspace.iconValue,
+    iconColor: workspace.iconColor,
+    ownerId: workspace.ownerId.toString(),
+    createdAt: workspace.createdAt,
+    role: membership?.role ?? null,
+  };
+};
+
+/** Update workspace name, slug and icon. `requireRole("workspace:update")` gates access. */
+export const updateWorkspaceSettings = async (
+  workspaceId: string,
+  input: WorkspaceSettingsInput,
+  actorId: string,
+) => {
+  const workspace = await Workspace.findById(workspaceId);
+  if (!workspace) throw new NotFoundException("Workspace not found");
+
+  if (input.slug !== undefined && input.slug !== workspace.slug) {
+    if (await Workspace.exists({ slug: input.slug, _id: mongoose.trusted({ $ne: workspaceId }) })) {
+      throw new ConflictException("This workspace URL is already taken");
+    }
+  }
+
+  if (input.name !== undefined) workspace.name = input.name.trim();
+  if (input.slug !== undefined) workspace.slug = input.slug;
+  if (input.iconType !== undefined) workspace.iconType = input.iconType;
+  if (input.iconValue !== undefined) workspace.iconValue = input.iconValue;
+  if (input.iconColor !== undefined) workspace.iconColor = input.iconColor;
+
+  await workspace.save();
+
+  await AuditEvent.create({
+    workspaceId,
+    actorId,
+    action: "workspace.updated",
+    targetType: "workspace",
+    targetId: workspaceId,
+  });
+
+  return {
+    id: workspace._id.toString(),
+    name: workspace.name,
+    slug: workspace.slug,
+    iconType: workspace.iconType,
+    iconValue: workspace.iconValue,
+    iconColor: workspace.iconColor,
+  };
 };

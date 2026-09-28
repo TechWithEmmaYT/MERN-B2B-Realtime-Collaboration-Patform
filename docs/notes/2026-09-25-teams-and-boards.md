@@ -66,6 +66,9 @@ Everything below this section is the detail behind these. Change a decision here
 21. **AI panel chat and agent status live in Liveblocks Feeds** (`createFeedMessage`,
     `updateFeedMessage`, `useFeedMessages`). Replies stream into one message. The history is
     shared with everyone on the board, so there is no chat table in Mongo.
+32. **AI panel UI uses Vercel AI Elements** for the chat parts only (installed per component,
+    shadcn-style). The panel shell is our own. Reference implementation: Liveblocks'
+    "Realtime AI Elements chats" example (see the AI Agent section).
 
 ### Canvas
 
@@ -303,22 +306,115 @@ Other sync points (our API calls Liveblocks, not the reverse):
 As in the plan (Phase 10). The agent is a server-side user (`userId: "ai-agent"`) and never
 opens a WebSocket.
 
-- Panel chat → `POST /api/v1/ai/boards/:boardId/chat`: check board access, then run the
-  Vercel AI SDK with Zod tools (`createStickyNotes`, `createFlowchart`, `createRoadmap`,
-  `summarizeSelection`, `organizeLayout`; later `createTable`, `createKanban`,
-  `createTimeline`).
-- The reply and the agent's status (thinking → writing → done) stream into **Liveblocks Feeds**
-  with `createFeedMessage` / `updateFeedMessage`. The panel renders them with
-  `useFeedMessages`, so the chat is saved and everyone on the board sees it.
-- Each tool that changes the board runs, in order:
+- Panel chat → `POST /api/v1/ai/boards/:boardId/chat`: check board access, reply `202` at
+  once, then stream in the background (errors are logged). A stop endpoint cancels it.
+- Zod tools in `backend/src/services/ai-tools.service.ts`, up to 8 steps per message:
+  - Create: `createStickyNotes`, `createFlowchart`, `createRoadmap`, `addShapes`, `addText`,
+    `addFrame` (can wrap existing items), `drawPicture` (strokes in a 300×300 box, drawn one by
+    one as path nodes inside a titled white frame, while the agent's cursor moves).
+  - Edit: `listBoardItems` (the system prompt says to call it first before touching existing
+    items), `moveItems`, `moveIntoFrame`, `connectItems` (handles picked automatically,
+    smoothstep edges), `updateItems`, `deleteItems`, `organizeLayout`.
+  - Read: `summarizeSelection`.
+  - Later: `createTable`, `createKanban`, `createTimeline`.
+- The reply streams into **Liveblocks Feeds** with `createFeedMessage` / `updateFeedMessage`
+  (non-blocking, batched every 150 ms). The panel renders `useFeedMessages`, so the chat is
+  saved and everyone on the board sees it.
+- Each tool that changes the board runs through `asAgent`, in order:
   1. `createVersionHistorySnapshot(roomId)` so people can revert the agent;
-  2. `setPresence(roomId, { userId: "ai-agent", userInfo: { name: "AI Agent", color }, ttl: 60 })`,
-     so "AI" appears in the avatar stack like the design;
-  3. `mutateFlow` to add nodes and edges, which everyone sees live;
-  4. `setPresence(..., { ttl: 2 })` to hide the agent when done.
+  2. `setPresence(roomId, { userId: "ai-agent", data: { cursor, promptingFeedId: null, aiStatus } })`,
+     so "AI" appears in the avatar stack and its cursor sits on the area being changed;
+  3. `mutateStorage` writes `flow.nodes` / `flow.edges`, which everyone sees live;
+  4. status "Done", then the presence expires (`ttl` 3).
+
+#### Agent presence and status
+
+- Presence has `aiStatus` (e.g. "Adding notes…", "Drawing flower…", "Done").
+- The agent's cursor label reads `AI Agent · <status>`, and the panel header shows the same
+  status (read with `useOthers`) in place of "Online".
+- `promptingFeedId`: while you wait for a reply, your presence names the chat, so others in that
+  chat also see "Thinking…".
 - Server writes are not transactions, so keep each tool's write small and idempotent.
 - Quick actions (Brainstorm ideas, Create a flowchart, Plan a roadmap, Summarize selected
   objects) are preset prompts. Per-workspace daily cap.
+
+#### Panel UI
+
+A panel docked on the right (the canvas narrows), not an overlay `Sheet`. It opens from the
+✨ AI button on the toolbar.
+
+| Part of the design | Built with |
+| --- | --- |
+| Header: "AI Agent ▾ · Online · Member of this workspace", new chat, history, ⋯, ✕ | Our own (shadcn `Button`, `DropdownMenu`) |
+| "Hey Emmanuel" greeting + quick actions | AI Elements **Suggestion** (or plain buttons) |
+| Message list, auto-scroll | AI Elements **Conversation** |
+| Each reply (markdown, streaming) | AI Elements **Message** + its response part |
+| "Creating 5 sticky notes…" steps | AI Elements **Tool** + a loader/shimmer |
+| "Select objects on the canvas to add context" + input + icon row | AI Elements **PromptInput**, our buttons in its toolbar |
+
+- Install only these components with `npx ai-elements add <component>`, not the whole set.
+  Confirm the exact component names at install time.
+- AI Elements only **renders**. Messages come from `useFeedMessages` and are mapped into its
+  components; it stores nothing.
+- Not Liveblocks `AiChat`: that uses Liveblocks' own hosted AI, which doesn't fit our
+  backend + AI SDK tools + `mutateFlow` setup.
+
+Built (`client/src/components/board/ai-agent-panel.tsx`):
+
+- Docked `w-96` panel. A new chat (feed id from `nanoid()`) each time it opens; History lists
+  older chats, titled from the first 60 characters of the first message.
+- Your message and a "Thinking…" bubble show at once, before the feed catches up. A guard
+  stops double sends.
+- Messages are sorted by `createdAt`. Avatars and names use the shared `UserAvatar` /
+  `useUser`, so they match the header stack ("AI" for the agent).
+- Actions on finished replies: Copy (with a fallback when the clipboard API is blocked) and
+  Regenerate (deletes the last reply and asks again).
+- Follow-up `Suggestions` render when the backend sends `suggestions` (not sent yet).
+
+#### Reference example
+
+Liveblocks "Realtime AI Elements chats":
+<https://liveblocks.io/examples/ai-elements-realtime/nextjs-ai-elements-realtime> (code:
+`liveblocks/liveblocks` → `examples/nextjs-ai-elements-realtime`). It matches our design:
+Feeds store the chat, the server streams replies with `createFeedMessage` /
+`updateFeedMessage`, clients read `useFeedMessages`, AI Elements renders reasoning, tool calls
+and sources, and there is an avatar stack plus an "AI is thinking" indicator.
+
+What we change from it:
+
+1. Next.js route → Express `POST /api/v1/ai/boards/:boardId/chat`, with the board-access check.
+2. Chat-only → tools that also edit the board (snapshot → `setPresence` → `mutateFlow`).
+3. One global chat → one feed per board room.
+4. Same Vercel AI Gateway (`AI_GATEWAY_API_KEY`). The model is set server-side in
+   `backend/src/services/ai.service.ts` (`DEFAULT_MODEL`).
+
+#### Model
+
+- **`anthropic/claude-sonnet-5`** through the AI Gateway (changed 2026-09-28 from
+  `openai/gpt-4o-mini`, which handled the drawing and layout tools poorly).
+- No `providerOptions` thinking settings. Sonnet 5 thinks adaptively by default and **rejects
+  `budgetTokens` with a 400**, so don't add it back.
+- `stopWhen: stepCountIs(8)` so the agent can call several tools per message.
+- Sonnet costs more per message than gpt-4o-mini, so watch the gateway credits.
+
+Read the example's code before building the panel: it shows which AI Elements components it
+installs and how it maps feed messages into them.
+
+#### Liveblocks Free plan
+
+Checked 2026-09-25 against the pricing page, Feeds docs, launch blog and the AI activity feed
+use case. None of them state which plans include Feeds.
+
+- Pricing says "All plans include: Sync, Comments, and Notifications", and Feeds is documented
+  under Sync (`/docs/products/sync/feeds`). The example needs only a Liveblocks API key.
+  So Feeds is **probably** on Free. This is an inference, not confirmed.
+- Free limits that affect Kano: 10 simultaneous connections per room, 10 MB storage per room,
+  512 MB file storage, 200 comments, **24 hours of version history** (Restore and "Undo AI
+  change" only reach back 24 hours on Free).
+- To confirm: create one feed message from the backend once Liveblocks is installed. The API
+  errors immediately if the plan doesn't allow it.
+- Fallback if Feeds isn't available: a MongoDB `AiMessage` collection with AI SDK streaming.
+  Nothing else in the plan changes.
 
 ### Env
 

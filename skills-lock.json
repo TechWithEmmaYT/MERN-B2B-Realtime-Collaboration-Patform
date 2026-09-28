@@ -7,6 +7,12 @@
       "skillPath": "skills/agent-email-inbox/SKILL.md",
       "computedHash": "e33f2863d24a5a4b96d8bc548a26f757c893b70db97034349973b381f6ed670d"
     },
+    "ai-sdk": {
+      "source": "vercel/ai",
+      "sourceType": "github",
+      "skillPath": "skills/use-ai-sdk/SKILL.md",
+      "computedHash": "aee5bf7ecb066b54eae76799610fa8a9be9ff1ca9a000ea92d17c14ec862938b"
+    },
     "email-best-practices": {
       "source": "resend/resend-skills",
       "sourceType": "github",

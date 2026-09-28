@@ -3,9 +3,15 @@ import { asyncHandler } from "../middlewares/asyncHandler.middleware";
 import {
   checkSlugAvailability,
   createWorkspace,
+  getWorkspaceSettings,
   listMyWorkspaces,
+  updateWorkspaceSettings,
 } from "../services/workspace.service";
-import { createWorkspaceSchema, slugQuerySchema } from "../validators/workspace.validator";
+import {
+  createWorkspaceSchema,
+  slugQuerySchema,
+  updateWorkspaceSchema,
+} from "../validators/workspace.validator";
 
 export const listMyWorkspacesHandler = asyncHandler(async (request, response) => {
   const workspaces = await listMyWorkspaces(request.user!.id);
@@ -39,4 +45,21 @@ export const checkSlugHandler = asyncHandler(async (request, response) => {
   const result = await checkSlugAvailability(slug);
 
   response.status(HTTPSTATUS.OK).json({ success: true, data: result });
+});
+
+export const getWorkspaceHandler = asyncHandler(async (request, response) => {
+  const workspace = await getWorkspaceSettings(request.workspaceId!, request.user!.id);
+
+  response.status(HTTPSTATUS.OK).json({ success: true, data: { workspace } });
+});
+
+export const updateWorkspaceHandler = asyncHandler(async (request, response) => {
+  const input = updateWorkspaceSchema.parse(request.body);
+  const workspace = await updateWorkspaceSettings(
+    request.workspaceId!,
+    input,
+    request.user!.id,
+  );
+
+  response.status(HTTPSTATUS.OK).json({ success: true, data: { workspace } });
 });

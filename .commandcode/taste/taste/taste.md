@@ -5,6 +5,7 @@
 - Explicitly maps each subsystem to the skill that should build it (auth → scaffolding skill, orgs → organizations skill, etc.) — follow that mapping rather than improvising. Confidence: 0.7
 - Wants a planning pass (`/plan-project`) before implementation on larger features. Confidence: 0.7
 - Supplies visual mockups in a `_designs` folder and expects them to be read as the spec/scope source. Confidence: 0.8
+- Also supplies UI reference screenshots inline in chat for feature requests (not only via `_designs` files) and expects them to be visually inspected (e.g. via vision) as part of the spec. Confidence: 0.6
 - Provides an explicit design-token color palette (primary/foreground/background/muted/border/ring, etc.) up front; use those exact tokens. Confidence: 0.8
 - Node.js APIs in TypeScript (Express-style) are the default backend stack. Confidence: 0.6
 - Frontend default: React + Vite with Tailwind CSS and shadcn/ui. Confidence: 0.8
@@ -12,12 +13,16 @@
 - References `@AGENTS.md` (and similar root-level convention files) when starting work — expects the agent to read it for project rules and survey current app state/recent changes before implementing. Confidence: 0.8
 - Writes terse, slightly typo-prone imperatives ("Let create...", "use shadcn ui sidebar and other component") — interpret intent generously and just execute; don't ask for clarification on minor phrasing. Confidence: 0.75
 - Prioritizes quick, focused UI refinements when an interface already exists; improve the current implementation rather than rebuilding it unnecessarily. Confidence: 0.75
-- Expects close visual fidelity to supplied UI references, including small spacing and control-component details; use established shared components (such as Avatar) instead of improvised substitutes. Confidence: 0.8
+- Expects close visual fidelity to supplied UI references, including small spacing, control-component details, and decorative/illustrative marks (e.g. a logo mark above an empty-state heading); use established shared components (such as Avatar) instead of improvised substitutes. Confidence: 0.85
 - Strongly values cost- and time-efficient execution: act quickly and avoid unnecessary exploratory or chat steps on straightforward requests. Confidence: 0.85
 - MongoDB is the default database; Passport with cookie-based JWT auth. Confidence: 0.8
 - Reaches for managed third-party services for hard subsystems: Liveblocks (realtime/collab), Resend (transactional email), Vercel AI SDK (AI features). Confidence: 0.7
 - Expects skills to be verified by listing the `.commandcode/skills` directory, not by trusting `skills-lock.json` — corrects claims that a skill is "missing" without checking disk. Confidence: 0.8
 - Wants locally installed skills and their `references/` read as the primary source before falling back to web docs. Confidence: 0.75
+- Maintains a project "notes doc" (e.g. Liveblocks tenant mapping and multiplayer React Flow guidance) and expects it to be read as the authoritative spec before implementing when a task says "Read the notes doc". Confidence: 0.6
+- When a task says "read the docs", expects the agent to first activate the relevant locally-installed skill (e.g. `liveblocks-best-practices`) and pull the named components' reference docs (e.g. `npx shadcn@latest docs <component>`, official API pages) — treat those docs as the authoritative API spec and use the exact exports/props shown, not invented equivalents. Confidence: 0.8
+- When a feature request names specific third-party component/API names (e.g. "FloatingComposer and CommentPin"), uses those exact identifiers verbatim and wires them into the integration — does not substitute homegrown primitives for the named SDK components. Confidence: 0.8
+- Prefers shadcn/ui primitives over hand-built ones: when a shadcn equivalent exists for a custom component (e.g. `Sidebar` vs. a custom aside), replace the custom implementation with the shadcn primitive rather than maintaining bespoke code. Confidence: 0.8
 - Invokes several slash-command skills at once and expects work to continue through all of them in one pass. Confidence: 0.7
 - Approves plans with a terse "yes" and expects the plan to be persisted as a dated markdown file under `docs/plans/` in the repo (not just shown in chat), with a link added from a root `AGENTS.md`. Confidence: 0.65
 - Scopes requests with `@folder` mentions (e.g. `@client`, `@_designs`) — treat the mentioned directory as the working scope for that task. Confidence: 0.65
@@ -35,10 +40,152 @@
 - Prefers client-side auth route guards: a `ProtectedRoute` wrapper for authenticated-only pages and a `PublicRoute` wrapper that redirects authenticated users away from sign-in/sign-up. Confidence: 0.75
 - Prefers workspace-scoped dashboard routing (`/dashboard/org/:workspaceId` as the workspace base with sub-routes like `/team`), and `/dashboard` should resolve to the user's own (first) workspace or onboarding if they have none. Confidence: 0.7
 - When asked to read or review changes, wants read-only analysis — explicitly says "don't edit"; don't make changes unless asked. Confidence: 0.6
+- Prefers sidebars/toolbars to span the full height of their container (matching the design) and sit flush against the header with no floating gap; flex stretch (`items-stretch`/`self-stretch`) alone left it floating, so use explicit heights (`h-screen` on the shell, `h-full` + `w-14 shrink-0` on the panel). Confidence: 0.75
+- Prefers using real design/raster assets (e.g. dropping in `empty-board-top.png`) over improvised inline SVG recreations of a mockup's artwork. Confidence: 0.65
+- When a design mockup is supplied, builds the screen visually first (matching the mockup) before wiring up behavior/functionality. Confidence: 0.6
 - Prefers submit buttons in create dialogs/forms to show a loading spinner and be disabled while the API call is in flight, and the dialog must stay open until the API succeeds (on failure, keep it open and surface the error). Confidence: 0.85
 - Prefers user-facing copy to reflect real authenticated-user data (e.g. a greeting showing the logged-in user's first name) rather than hardcoded placeholder values. Confidence: 0.7
 - When reporting a bug, names the specific account/workspace to reproduce against and expects the agent to verify against actual data (e.g. query the DB) rather than guess from code. Confidence: 0.6
 - Prefers dedicated empty states for empty lists/containers (e.g. a teams sidebar) rather than rendering nothing. Confidence: 0.7
-they have none. Confidence: 0.7
+- Prefers a layered backend architecture — route → controller → service → model (with validators) — rather than logic inline in route handlers. Confidence: 0.7
+- Prefers clickable rows in list/table views that navigate to the item's detail page (e.g. a board row → board page), while keeping in-row controls (checkboxes, menus) from also triggering navigation. Confidence: 0.6
+- Prefers UI wired to real backend APIs end-to-end (replacing mock/placeholder data) once the endpoints exist — e.g. connect the workspace switcher, teams list/create, and create-board dialog to live endpoints. Confidence: 0.7
+- Makes concurrent edits/restructures to files while the agent is working (e.g. moving a component, adding a skeleton, floating the board toolbar, adding connection-status toasts) and expects the agent to re-read files before writing and preserve those changes rather than overwriting them. Confidence: 0.7
+- On canvas/board screens, prefers a floating tool palette overlay (Figma/Miro-style: absolute-positioned, rounded, shadowed, overlaid on the canvas) rather than a docked, full-height panel. Confidence: 0.6
+- Prefers realtime collaboration UIs to surface connection status explicitly — sonner toasts for connecting/reconnecting/connection-lost — and to disable the UI (e.g. a disabled `<fieldset>` wrapper) until connected. Confidence: 0.6
+- Reports bugs as a screenshot plus a terse imperative (e.g. "fix it not working"), expecting the agent to visually identify which controls are broken rather than require a written reproduction. Confidence: 0.6
+- Prefers the canvas/board cursor to reflect the active tool (a custom cursor built from that tool's icon in `src/assets/icons/`) instead of a generic grab hand — Select shows an arrow and hovering a node/edge shows a pointer hand. Confidence: 0.7
+- Prefers canvas panning to be opt-in: the grab hand appears only while holding Space or middle-mouse dragging, and `grabbing` only while actively dragging; never `grab` by default. Confidence: 0.7
+- Prefers non-blocking canvas overlays — when a non-default tool is active, fade the empty state (e.g. to 30% opacity) and let clicks pass through to the canvas (`pointer-events-none`). Confidence: 0.6
+- Specifies interaction behavior in explicit multi-state terms (default / hover / active-drag / modifier-held) and expects those states to be implemented exactly rather than accepting library defaults. Confidence: 0.6
+- Uses Miro as the UX/design benchmark for the board/canvas product — asks for Miro-style interactions (e.g. a sticky-note colour picker popover next to the toolbar). Confidence: 0.65
+- Prefers inline editing to follow standard conventions: Esc or clicking outside finishes editing and returns to the default Select tool. Confidence: 0.7
+- Prefers low-friction object creation — immediately after placing a note/text/shape, auto-select it and enter inline text editing. Confidence: 0.65
+- Prefers shadcn/Radix `Popover` components (`PopoverAnchor` + `PopoverContent`) for floating pickers/popovers over hand-rolled absolutely-positioned divs + manual backdrops, relying on Radix's outside-click/Esc dismissal. Confidence: 0.7
+- Prefers compact popover layouts: for color-swatch grids use fewer columns (e.g. 2) with larger swatches sized roughly to the toolbar height, avoiding tall/long popovers. Confidence: 0.7
+- Prefers a generous note-color palette in the board color picker (more swatches beyond the base pastel set, e.g. ~12), even at the cost of a taller popover. Confidence: 0.55
+- Prefers existing canvas nodes (note/text/shape) to be editable inline by clicking them while the Select tool is active, without switching to a drawing tool. Confidence: 0.7
+- Prefers all canvas nodes to expose resize handles (e.g. React Flow's `NodeResizer`) when selected, matching the white circular corner handles in the UI reference. Confidence: 0.7
+- Prefers tool-option menus (e.g. the shape-type and draw menus) to reuse the same popover style and toolbar-anchored position as the note color picker for visual consistency ("the popover just like the note"). Confidence: 0.7
+- Prefers keyboard shortcut hints shown beside the matching menu item (e.g. `L`/`R`/`O` as `<kbd>` badges), even before the shortcuts are wired up. Confidence: 0.65
+- Prefers tool menus organized into labeled, separated groups (e.g. Connectors / Shapes / a final "Diagram" entry) rather than one flat list. Confidence: 0.6
+ freehand drawing to produce first-class `path` nodes (storing points, color, size, and pen/highlighter mode) rather than a separate scribble/bitmap layer — everything on the board is a node. Confidence: 0.7
+- Prefers an eraser that deletes whole strokes/objects when dragged over them (object-level erasing), not pixel-level erasing. Confidence: 0.7
+- Prefers highlighter strokes to render wider and semi-transparent, visually distinct from solid pen strokes. Confidence: 0.7
+- Prefers discrete labeled tiers for adjustable tool attributes (e.g. stroke size thin/medium/thick) rather than continuous sliders. Confidence: 0.6
+- Prefers board keyboard shortcuts to follow platform conventions: single-letter keys for tools (V Select, N Note, T Text, R Rectangle, O Oval, L Line) and standard editing keys (Delete removes selection, Ctrl/Cmd+Z undo, Ctrl/Cmd+Shift+Z redo, Ctrl/Cmd+D duplicate). Confidence: 0.7
+- Prefers keyboard shortcuts to be ignored while focus is in a text field (input, textarea, or contentEditable) so typing in note/text nodes doesn't trigger board shortcuts. Confidence: 0.8
+- When multiple agents work on the same repo, keeps changes strictly scoped to the one requested page/feature — does not touch other pages/files (even to fix unrelated dangling imports elsewhere) and leaves other agents' in-progress files alone. Confidence: 0.75
+- Uses sample/mock data (local `useState`/static arrays) for new UI features until the backend API exists — explicitly "use sample data till api exist" — rather than blocking the UI on missing endpoints. Confidence: 0.7
+- Wants workspace member-management permissions restricted to admin and owner, with the owner's role and membership immutable (owner cannot be removed or have their role changed). Confidence: 0.75
+- Prefers debugging UI bugs by reproducing them in a live browser via the `agent-browser` skill (observing the actual rendered state and network/HTTP responses) rather than inferring the failure from code alone. Confidence: 0.7
+- When debugging backend issues, expects tracing the full request pipeline end-to-end (route → controller → service → model/validator) rather than focusing on a single layer. Confidence: 0.6
+- Enables Mongoose's global `sanitizeFilter`; expects `# Taste
+- Keeps server/API code in a dedicated top-level `backend/` folder. Confidence: 0.7
+- Prefers minimal scaffolds: explicitly scopes out features that weren't asked for (e.g. "no auth"); don't add extra subsystems unprompted. Confidence: 0.7
+- Drives work through slash-command skills (e.g. `/nodejs-scaffolding`) with short, terse instructions. Confidence: 0.7
+- Explicitly maps each subsystem to the skill that should build it (auth → scaffolding skill, orgs → organizations skill, etc.) — follow that mapping rather than improvising. Confidence: 0.7
+- Wants a planning pass (`/plan-project`) before implementation on larger features. Confidence: 0.7
+- Supplies visual mockups in a `_designs` folder and expects them to be read as the spec/scope source. Confidence: 0.8
+- Also supplies UI reference screenshots inline in chat for feature requests (not only via `_designs` files) and expects them to be visually inspected (e.g. via vision) as part of the spec. Confidence: 0.6
+- Provides an explicit design-token color palette (primary/foreground/background/muted/border/ring, etc.) up front; use those exact tokens. Confidence: 0.8
+- Node.js APIs in TypeScript (Express-style) are the default backend stack. Confidence: 0.6
+- Frontend default: React + Vite with Tailwind CSS and shadcn/ui. Confidence: 0.8
+- This project's shadcn/ui is the Radix-UI variant (uses `asChild` + child-element pattern, NOT Base UI's `render` prop). Reach for `asChild` and put the link/button element as the child of shadcn primitives. Confidence: 0.85
+- References `@AGENTS.md` (and similar root-level convention files) when starting work — expects the agent to read it for project rules and survey current app state/recent changes before implementing. Confidence: 0.8
+- Writes terse, slightly typo-prone imperatives ("Let create...", "use shadcn ui sidebar and other component") — interpret intent generously and just execute; don't ask for clarification on minor phrasing. Confidence: 0.75
+- Prioritizes quick, focused UI refinements when an interface already exists; improve the current implementation rather than rebuilding it unnecessarily. Confidence: 0.75
+- Expects close visual fidelity to supplied UI references, including small spacing, control-component details, and decorative/illustrative marks (e.g. a logo mark above an empty-state heading); use established shared components (such as Avatar) instead of improvised substitutes. Confidence: 0.85
+- Strongly values cost- and time-efficient execution: act quickly and avoid unnecessary exploratory or chat steps on straightforward requests. Confidence: 0.85
+- MongoDB is the default database; Passport with cookie-based JWT auth. Confidence: 0.8
+- Reaches for managed third-party services for hard subsystems: Liveblocks (realtime/collab), Resend (transactional email), Vercel AI SDK (AI features). Confidence: 0.7
+- Expects skills to be verified by listing the `.commandcode/skills` directory, not by trusting `skills-lock.json` — corrects claims that a skill is "missing" without checking disk. Confidence: 0.8
+- Wants locally installed skills and their `references/` read as the primary source before falling back to web docs. Confidence: 0.75
+- Maintains a project "notes doc" (e.g. Liveblocks tenant mapping and multiplayer React Flow guidance) and expects it to be read as the authoritative spec before implementing when a task says "Read the notes doc". Confidence: 0.6
+- When a task says "read the docs", expects the agent to first activate the relevant locally-installed skill (e.g. `liveblocks-best-practices`) and pull the named components' reference docs (e.g. `npx shadcn@latest docs <component>`, official API pages) — treat those docs as the authoritative API spec and use the exact exports/props shown, not invented equivalents. Confidence: 0.8
+- When a feature request names specific third-party component/API names (e.g. "FloatingComposer and CommentPin"), uses those exact identifiers verbatim and wires them into the integration — does not substitute homegrown primitives for the named SDK components. Confidence: 0.8
+- Prefers shadcn/ui primitives over hand-built ones: when a shadcn equivalent exists for a custom component (e.g. `Sidebar` vs. a custom aside), replace the custom implementation with the shadcn primitive rather than maintaining bespoke code. Confidence: 0.8
+- Invokes several slash-command skills at once and expects work to continue through all of them in one pass. Confidence: 0.7
+- Approves plans with a terse "yes" and expects the plan to be persisted as a dated markdown file under `docs/plans/` in the repo (not just shown in chat), with a link added from a root `AGENTS.md`. Confidence: 0.65
+- Scopes requests with `@folder` mentions (e.g. `@client`, `@_designs`) — treat the mentioned directory as the working scope for that task. Confidence: 0.65
+- Frontend data/stack defaults beyond React+Vite+Tailwind+shadcn: React Router, TanStack React Query, axios, lucide-react, Zod, React Hook Form (+ `@hookform/resolvers`). Confidence: 0.85
+- Wants a single shared axios instance in `src/lib/axios-client.ts`, exported as `API`, configured with `withCredentials: true` (cookie auth). Confidence: 0.85
+- Wants all HTTP endpoint calls centralized in `src/lib/api.ts` as named functions with `...MutationFn` / `...QueryFn` suffixes (e.g. `loginMutationFn`, `getCurrentUserQueryFn`) rather than inline fetches in components. Confidence: 0.85
+- Wants shared TypeScript types in a dedicated `src/types/` folder (split by domain with a barrel `index.ts`). Confidence: 0.8
+- Wants SVG-as-React-component support enabled in Vite apps (e.g. `vite-plugin-svgr`), and brand assets (logo/favicon) wrapped in a reusable `Logo` component. Confidence: 0.75
+- Asks for features in vertical slices of screens (auth: register → onboarding → sign-in) with the exact dependency list and file layout spelled out; follow the requested structure literally. Confidence: 0.7
+- Expects implementation plans to be detailed and phased (numbered phases with checkboxes, per-phase "done when" criteria, data model, permission matrix, assumptions, and open risks). Confidence: 0.65
+- Uses Mongoose as the MongoDB ODM for backend models (prefers it over the raw driver). Confidence: 0.7
+- Configures the backend through environment variables in `.env` / `.env.example` (e.g. `MONGO_URI`) rather than hard-coding secrets or connection strings. Confidence: 0.6
+- References plan docs via `@docs/plans/*.md` mentions and expects the agent to read that file as the authoritative spec for what to build rather than re-asking for scope. Confidence: 0.7
+- Wraps multi-write database operations (e.g. workspace creation plus its owner membership and audit event) in a Mongoose transaction for atomicity, and maps duplicate-key (11000) races to a clean ConflictException. Confidence: 0.75
+- Prefers client-side auth route guards: a `ProtectedRoute` wrapper for authenticated-only pages and a `PublicRoute` wrapper that redirects authenticated users away from sign-in/sign-up. Confidence: 0.75
+- Prefers workspace-scoped dashboard routing (`/dashboard/org/:workspaceId` as the workspace base with sub-routes like `/team`), and `/dashboard` should resolve to the user's own (first) workspace or onboarding if they have none. Confidence: 0.7
 - When asked to read or review changes, wants read-only analysis — explicitly says "don't edit"; don't make changes unless asked. Confidence: 0.6
-eview changes, wants read-only analysis — explicitly says "don't edit"; don't make changes unless asked. Confidence: 0.6
+- Prefers sidebars/toolbars to span the full height of their container (matching the design) and sit flush against the header with no floating gap; flex stretch (`items-stretch`/`self-stretch`) alone left it floating, so use explicit heights (`h-screen` on the shell, `h-full` + `w-14 shrink-0` on the panel). Confidence: 0.75
+- Prefers using real design/raster assets (e.g. dropping in `empty-board-top.png`) over improvised inline SVG recreations of a mockup's artwork. Confidence: 0.65
+- When a design mockup is supplied, builds the screen visually first (matching the mockup) before wiring up behavior/functionality. Confidence: 0.6
+- Prefers submit buttons in create dialogs/forms to show a loading spinner and be disabled while the API call is in flight, and the dialog must stay open until the API succeeds (on failure, keep it open and surface the error). Confidence: 0.85
+- Prefers user-facing copy to reflect real authenticated-user data (e.g. a greeting showing the logged-in user's first name) rather than hardcoded placeholder values. Confidence: 0.7
+- When reporting a bug, names the specific account/workspace to reproduce against and expects the agent to verify against actual data (e.g. query the DB) rather than guess from code. Confidence: 0.6
+- Prefers dedicated empty states for empty lists/containers (e.g. a teams sidebar) rather than rendering nothing. Confidence: 0.7
+- Prefers a layered backend architecture — route → controller → service → model (with validators) — rather than logic inline in route handlers. Confidence: 0.7
+- Prefers clickable rows in list/table views that navigate to the item's detail page (e.g. a board row → board page), while keeping in-row controls (checkboxes, menus) from also triggering navigation. Confidence: 0.6
+- Prefers UI wired to real backend APIs end-to-end (replacing mock/placeholder data) once the endpoints exist — e.g. connect the workspace switcher, teams list/create, and create-board dialog to live endpoints. Confidence: 0.7
+- Makes concurrent edits/restructures to files while the agent is working (e.g. moving a component, adding a skeleton, floating the board toolbar, adding connection-status toasts) and expects the agent to re-read files before writing and preserve those changes rather than overwriting them. Confidence: 0.7
+- On canvas/board screens, prefers a floating tool palette overlay (Figma/Miro-style: absolute-positioned, rounded, shadowed, overlaid on the canvas) rather than a docked, full-height panel. Confidence: 0.6
+- Prefers realtime collaboration UIs to surface connection status explicitly — sonner toasts for connecting/reconnecting/connection-lost — and to disable the UI (e.g. a disabled `<fieldset>` wrapper) until connected. Confidence: 0.6
+- Reports bugs as a screenshot plus a terse imperative (e.g. "fix it not working"), expecting the agent to visually identify which controls are broken rather than require a written reproduction. Confidence: 0.6
+- Prefers the canvas/board cursor to reflect the active tool (a custom cursor built from that tool's icon in `src/assets/icons/`) instead of a generic grab hand — Select shows an arrow and hovering a node/edge shows a pointer hand. Confidence: 0.7
+- Prefers canvas panning to be opt-in: the grab hand appears only while holding Space or middle-mouse dragging, and `grabbing` only while actively dragging; never `grab` by default. Confidence: 0.7
+- Prefers non-blocking canvas overlays — when a non-default tool is active, fade the empty state (e.g. to 30% opacity) and let clicks pass through to the canvas (`pointer-events-none`). Confidence: 0.6
+- Specifies interaction behavior in explicit multi-state terms (default / hover / active-drag / modifier-held) and expects those states to be implemented exactly rather than accepting library defaults. Confidence: 0.6
+- Uses Miro as the UX/design benchmark for the board/canvas product — asks for Miro-style interactions (e.g. a sticky-note colour picker popover next to the toolbar). Confidence: 0.65
+- Prefers inline editing to follow standard conventions: Esc or clicking outside finishes editing and returns to the default Select tool. Confidence: 0.7
+- Prefers low-friction object creation — immediately after placing a note/text/shape, auto-select it and enter inline text editing. Confidence: 0.65
+- Prefers shadcn/Radix `Popover` components (`PopoverAnchor` + `PopoverContent`) for floating pickers/popovers over hand-rolled absolutely-positioned divs + manual backdrops, relying on Radix's outside-click/Esc dismissal. Confidence: 0.7
+- Prefers compact popover layouts: for color-swatch grids use fewer columns (e.g. 2) with larger swatches sized roughly to the toolbar height, avoiding tall/long popovers. Confidence: 0.7
+- Prefers a generous note-color palette in the board color picker (more swatches beyond the base pastel set, e.g. ~12), even at the cost of a taller popover. Confidence: 0.55
+- Prefers existing canvas nodes (note/text/shape) to be editable inline by clicking them while the Select tool is active, without switching to a drawing tool. Confidence: 0.7
+- Prefers all canvas nodes to expose resize handles (e.g. React Flow's `NodeResizer`) when selected, matching the white circular corner handles in the UI reference. Confidence: 0.7
+- Prefers tool-option menus (e.g. the shape-type and draw menus) to reuse the same popover style and toolbar-anchored position as the note color picker for visual consistency ("the popover just like the note"). Confidence: 0.7
+- Prefers keyboard shortcut hints shown beside the matching menu item (e.g. `L`/`R`/`O` as `<kbd>` badges), even before the shortcuts are wired up. Confidence: 0.65
+- Prefers tool menus organized into labeled, separated groups (e.g. Connectors / Shapes / a final "Diagram" entry) rather than one flat list. Confidence: 0.6
+ freehand drawing to produce first-class `path` nodes (storing points, color, size, and pen/highlighter mode) rather than a separate scribble/bitmap layer — everything on the board is a node. Confidence: 0.7
+- Prefers an eraser that deletes whole strokes/objects when dragged over them (object-level erasing), not pixel-level erasing. Confidence: 0.7
+- Prefers highlighter strokes to render wider and semi-transparent, visually distinct from solid pen strokes. Confidence: 0.7
+- Prefers discrete labeled tiers for adjustable tool attributes (e.g. stroke size thin/medium/thick) rather than continuous sliders. Confidence: 0.6
+- Prefers board keyboard shortcuts to follow platform conventions: single-letter keys for tools (V Select, N Note, T Text, R Rectangle, O Oval, L Line) and standard editing keys (Delete removes selection, Ctrl/Cmd+Z undo, Ctrl/Cmd+Shift+Z redo, Ctrl/Cmd+D duplicate). Confidence: 0.7
+- Prefers keyboard shortcuts to be ignored while focus is in a text field (input, textarea, or contentEditable) so typing in note/text nodes doesn't trigger board shortcuts. Confidence: 0.8
+- When multiple agents work on the same repo, keeps changes strictly scoped to the one requested page/feature — does not touch other pages/files (even to fix unrelated dangling imports elsewhere) and leaves other agents' in-progress files alone. Confidence: 0.75
+- Uses sample/mock data (local `useState`/static arrays) for new UI features until the backend API exists — explicitly "use sample data till api exist" — rather than blocking the UI on missing endpoints. Confidence: 0.7
+- Wants workspace member-management permissions restricted to admin and owner, with the owner's role and membership immutable (owner cannot be removed or have their role changed). Confidence: 0.75
+- Prefers debugging UI bugs by reproducing them in a live browser via the `agent-browser` skill (observing the actual rendered state and network/HTTP responses) rather than inferring the failure from code alone. Confidence: 0.7
+- When debugging backend issues, expects tracing the full request pipeline end-to-end (route → controller → service → model/validator) -operators (e.g. `$in`) in queries to be wrapped in `mongoose.trusted()` so sanitization doesn't strip them into `{}` and trigger ObjectId cast errors. Confidence: 0.9
+- Writes audit events for membership-management mutations (e.g. team members added, member removed from a team), not only for workspace/account creation. Confidence: 0.7
+- Restricts team-membership management to owner/admin (`team:manage`); only workspace members can be added and members cannot be removed from the General team. Confidence: 0.7
+- When interrupted mid-task, expects the agent to resume from where it stopped (not restart) and to also incorporate any later fixes/additions the user made in the meantime. Confidence: 0.6
+- Prefers post-auth redirect-back to the originating page (e.g. after signing in/up from a public invite link, return to that link rather than the default onboarding/dashboard), implemented via a `?redirect=` query param honored by BOTH the auth pages and the auth route guard — otherwise the guard's `/dashboard` redirect races ahead and overrides the intended return. Confidence: 0.75
+- Prefers public/status pages to enumerate each distinct terminal/error state with its own clear, actionable message (e.g. an invite page separating expired / revoked / already-used / wrong-email instead of one generic "invalid" message). Confidence: 0.7
+- Prefers invalidating TanStack Query caches after mutations that change shared server state the user is about to navigate to (e.g. `invalidateQueries({ queryKey: ['my-workspaces'] })` after workspace creation or invite acceptance), rather than relying on the mutation response alone. Confidence: 0.8
+- Prefers route/redirect decisions to wait for fresh data — treat a query as loading while `isLoading || isFetching` (not just the initial load) — so navigation never acts on stale cached query results. Confidence: 0.8
+- Prefers one file per named template/variant (e.g. board templates Brainstorm/Flowchart/Roadmap/Journey) rather than a single combined file, with a barrel index re-exporting them. Confidence: 0.6
+- Prefers restricting enumerated input values (e.g. allowed board template names) to an explicit whitelist/enum — a Zod `z.enum` over an `as const` key array — rather than accepting free-form strings. Confidence: 0.65
+- Prefers canonical content/seed definitions (e.g. board templates' notes/shapes/arrows) to live in the backend as typed modules served via an API endpoint, with the client fetching and seeding from them rather than hardcoding them client-side. Confidence: 0.6
+- For AI features, the chosen stack is AI Elements (`ai-elements`) for UI components, the AI SDK (`ai` package) for AI logic, and Vercel AI Gateway for model routing. Confidence: 0.75
+- Provides reference implementation examples via links (e.g. a Liveblocks AI Elements realtime example) and expects the agent to mirror that example's approach/structure when building the feature. Confidence: 0.6
+- Prefers canvas nodes to expose four connection handles (top/right/bottom/left), each able to both start and end an arrow (a source + target handle per side), hidden until the node is hovered or the Connector tool is active. Confidence: 0.7
+- For directed/template edges, specifies explicit handle positions (e.g. a flowchart uses `sourceHandle: 'bottom'` → `targetHandle: 'top'` for top-to-bottom flow) rather than relying on automatic edge routing. Confidence: 0.6
+- Prefers clicking a template card on an empty board to immediately fill the board with that template's nodes/edges, not just open a blank canvas. Confidence: 0.6
+- Prefers the AI agent as a right-docked overlay panel (full-height, ~`w-96`) toggled from the toolbar's AI button — header with status line + new-chat/history/⋯/✕ icon actions, a "Hey {name}" greeting, quick actions, and a chat area — rather than a modal or separate page. Confidence: 0.6
+- Tracks its own stated next-steps/follow-up notes and proactively continues from them: when asked to "start the next task" or continue, resumes from those notes instead of reporting nothing queued — the user will quote the agent's own chat notes back to it. Confidence: 0.6
+- Prefers the latest available version of third-party packages (e.g. AI SDK v7 via `ai@latest`) over an older version pinned/used by a reference example, even while mirroring that example's structure — when a newer major is out, install `@latest` rather than matching the example's version. Confidence: 0.7
+- Prefers to run install/setup shell commands manually in their own terminal (copy-pasting them) rather than having the agent execute them — when a step involves installing dependencies, provide the command(s) for the user to run instead of running them yourself. Confidence: 0.7
+- Prefers shell commands delivered as single-line, copy-pasteable one-liners (e.g. `cd client && npx ...`) rather than multi-line or step-by-step breakdowns. Confidence: 0.6
+- Prefers chat messages in the AI panel to show the sender's avatar and name above each message (the user's own messages right-aligned). Confidence: 0.7
+- Prefers prompt-input controls to reflect streaming state: the primary send/submit action is right-aligned in the footer and morphs into a stop button while an AI reply is streaming, which aborts the in-flight generation and finalizes the partial text. Confidence: 0.8
+- Prefers long-running AI chat requests to return immediately (fire-and-forget, e.g. 202 Accepted) rather than holding the HTTP request open for the full generation, so streamed replies don't hit request timeouts; the reply streams through the realtime feed. Confidence: 0.6
+- For agentic AI features, prefers the agent's board mutations (adding/arranging nodes and edges) to run as server-side AI SDK tool calls (the `ai` package's `tool` + `streamText` tools) executed on the backend, writing to the same realtime storage shape the client uses, rather than client-side imperative changes or ad-hoc endpoints. Confidence: 0.65
+- Prefers saving a restore point (version-history snapshot) before the AI agent mutates board state, so automated changes are undoable. Confidence: 0.7
+- Prefers the AI agent to appear as present on the board (via Liveblocks presence) while it is acting, then fade out when done, so collaborators can see the agent at work. Confidence: 0.65
+- Prefers each AI tool invocation to be surfaced as a visible, collapsible step in the chat (tool name, parameters, result/status) rather than silent mutations, keeping agent actions transparent and auditable. Confidence: 0.7

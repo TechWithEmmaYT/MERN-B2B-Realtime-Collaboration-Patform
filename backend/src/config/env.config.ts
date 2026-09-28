@@ -13,6 +13,8 @@ export const Env = {
   APP_URL: getEnv("APP_URL", "http://localhost:5173"),
   RESEND_API_KEY: getEnv("RESEND_API_KEY", ""),
   RESEND_FROM_EMAIL: getEnv("RESEND_FROM_EMAIL", "Kano <onboarding@resend.dev>"),
+  LIVEBLOCKS_SECRET_KEY: getEnv("LIVEBLOCKS_SECRET_KEY", ""),
+  AI_GATEWAY_API_KEY: getEnv("AI_GATEWAY_API_KEY", ""),
   GOOGLE_CLIENT_ID: getEnv("GOOGLE_CLIENT_ID", ""),
   GOOGLE_CLIENT_SECRET: getEnv("GOOGLE_CLIENT_SECRET", ""),
   GOOGLE_CALLBACK_URL: getEnv(

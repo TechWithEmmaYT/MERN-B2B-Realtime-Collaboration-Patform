@@ -51,3 +51,43 @@ export type SendInvitesResponse = {
   invited: string[]
   skipped: string[]
 }
+
+export type WorkspaceMember = {
+  id: string
+  name: string
+  email: string
+  role: WorkspaceRole
+  joinedAt: string
+  teams: string[]
+}
+
+export type WorkspaceMembersResponse = {
+  members: WorkspaceMember[]
+}
+
+export type PendingInvite = {
+  id: string
+  email: string
+  role: WorkspaceRole
+  invitedAt: string
+}
+
+export type PendingInvitesResponse = {
+  invitations: PendingInvite[]
+}
+
+export type UpdateMemberRolePayload = {
+  role: WorkspaceRole
+}
+
+export type WorkspaceSettings = Workspace & {
+  role: WorkspaceRole | null
+}
+
+export type UpdateWorkspacePayload = {
+  name?: string
+  slug?: string
+  iconType?: WorkspaceIconType
+  iconValue?: string
+  iconColor?: WorkspaceIconColor
+}

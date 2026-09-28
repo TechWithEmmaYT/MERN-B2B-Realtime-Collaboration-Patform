@@ -133,7 +133,7 @@ owner (transfer required before leaving); prefer archive over hard delete.
       before setting the exit code.
 - [ ] Add remaining env vars: `JWT_SECRET`, `JWT_EXPIRES_IN`, `GOOGLE_CLIENT_ID`,
       `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL`, `LIVEBLOCKS_SECRET_KEY`,
-      `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `EMAIL_FROM`, `APP_URL`, `AI_API_KEY`.
+      `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `EMAIL_FROM`, `APP_URL`, `AI_GATEWAY_API_KEY`.
 - [ ] Add Vitest + Supertest and an in-memory Mongo for tests.
 
 **Done when:** `npm run dev` connects to Mongo and `/health` still returns `{"status":"ok"}`.
@@ -332,23 +332,41 @@ build it as a custom `path` node sized to its stroke bounds.
 
 ### Phase 10 — AI agent
 
-- [ ] Install `ai` + a provider SDK on the backend.
-- [ ] `POST /api/v1/ai/boards/:boardId/chat` — authorize board access, then stream.
-- [ ] Tools with Zod schemas: `createStickyNotes`, `createFlowchart`, `createRoadmap`,
-      `summarizeSelection`, `organizeLayout`.
-- [ ] Every mutating tool follows this order:
+- [x] Install `ai` on the backend. Models go through the Vercel AI Gateway
+      (`AI_GATEWAY_API_KEY`); the model is `anthropic/claude-sonnet-5` (2026-09-28), with no
+      `budgetTokens` (Sonnet 5 returns a 400 for it). Details in the notes' AI Agent section.
+- [x] `POST /api/v1/ai/boards/:boardId/chat` — authorize board access, reply `202` at once,
+      then stream in the background (a long reply no longer hits the 20s axios timeout).
+      A stop endpoint cancels the stream.
+- [x] Tools with Zod schemas (`backend/src/services/ai-tools.service.ts`), up to 8 tool
+      steps per message (`stepCountIs(8)`):
+      - Create: `createStickyNotes`, `createFlowchart`, `createRoadmap`, `addShapes`,
+        `addText`, `addFrame` (can wrap existing items), `drawPicture` (strokes drawn one by
+        one inside a titled frame, e.g. a flower or a house).
+      - Edit: `listBoardItems` (called first before touching existing items), `moveItems`,
+        `moveIntoFrame`, `connectItems` (picks handles automatically, smoothstep edges),
+        `updateItems`, `deleteItems`, `organizeLayout`.
+      - Read: `summarizeSelection`.
+- [x] Every mutating tool follows this order (`asAgent` helper):
   1. `createVersionHistorySnapshot(roomId)` so the user can revert the agent
-  2. `setPresence(roomId, { userId: "ai-agent", userInfo: { name: "AI Agent", color }, ttl: 60 })`
-  3. `mutateFlow` to write nodes and edges
-  4. `setPresence(..., { ttl: 2 })` to hide the agent when finished
-- [ ] The `ai-agent` user resolves through the same user-info resolver, so the existing avatar
-      stack and cursors show it with no extra UI — exactly as the board design shows.
+  2. `setPresence(roomId, { userId: "ai-agent", data: { cursor, aiStatus } })`, with the cursor
+     placed on the area it is working on
+  3. `mutateStorage` to write `flow.nodes` / `flow.edges`
+  4. Status "Done", then the presence expires (`ttl` 3)
+- [x] The `ai-agent` user resolves through the same user-info resolver, so the avatar stack
+      and cursors show it with no extra UI. Its cursor label reads `AI Agent · <status>`
+      (e.g. "Drawing flower…") and the panel header shows the same status.
 - [ ] Right-hand panel: greeting, quick actions (Brainstorm ideas, Create a flowchart, Plan a
-      roadmap, Summarize selected objects), "select objects to add context" hint,
-      per-workspace daily request cap.
-- [ ] Chat messages and agent status stream into Liveblocks Feeds (`createFeedMessage`,
-      `updateFeedMessage`); the panel renders `useFeedMessages`.
+      roadmap, Summarize selected objects), "select objects to add context" hint — done;
+      **per-workspace daily request cap still to do.**
+- [x] Chat messages stream into Liveblocks Feeds (`createFeedMessage`, `updateFeedMessage`,
+      batched every 150 ms); the panel renders `useFeedMessages`, sorted by `createdAt`.
+- [x] Panel UI: docked right panel (`w-96`), chat parts from Vercel AI Elements. Details in the
+      notes' AI Agent section.
 - [ ] "Undo AI change" restores the snapshot taken in step 1.
+- [ ] Still open: server-side chat history (the client sends it today), follow-up
+      `suggestions` from the backend, keeping partial text on error, panning to AI-created
+      content.
 
 > Server-side mutations are not database transactions — changes made before an `await` can
 > flush before later work completes. Keep each tool's mutation tight and idempotent.
@@ -370,7 +388,7 @@ build it as a custom `path` node sized to its stroke bounds.
 - Google OAuth links to an existing account when the verified email matches; no separate
   account-linking UI.
 - Invitations expire after 7 days. A board belongs to exactly one team.
-- One AI provider via Vercel AI SDK, with a per-workspace daily cap.
+- One AI model (Claude Sonnet 5 via the Vercel AI Gateway), with a per-workspace daily cap.
 - Boards and workspaces are archived (soft-deleted), not hard-deleted.
 
 ---
@@ -385,6 +403,8 @@ build it as a custom `path` node sized to its stroke bounds.
    mitigate, but server mutations are not transactional.
 8. **Unverified APIs** — confirm `LiveText` inside React Flow node data, the import path of
    `mutateFlow`, and Feeds availability on our Liveblocks plan before building on them.
+   Feeds is probably on Free (it is part of Sync) but no page says so; the fallback is a
+   MongoDB `AiMessage` collection. Free version history only covers 24 hours.
 5. **Toolchain freshness** — React 19, Vite 8, TS ~6 versus Tailwind v4 / shadcn.
 6. **Secrets not yet provisioned** — Mongo, JWT, Google, Liveblocks, Resend, AI provider.
 7. **`ts-node` is incompatible with the installed TypeScript**; the backend dev runner is

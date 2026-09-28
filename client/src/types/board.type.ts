@@ -1,3 +1,5 @@
+import type { FlowEdge, FlowNode } from './flow'
+
 export type BoardOwner = {
   id: string
   name: string
@@ -33,4 +35,10 @@ export type CreateBoardPayload = {
   title: string
   description?: string
   templateKey?: string
+}
+
+export type BoardTemplateContent = {
+  key: string
+  nodes: FlowNode[]
+  edges: FlowEdge[]
 }

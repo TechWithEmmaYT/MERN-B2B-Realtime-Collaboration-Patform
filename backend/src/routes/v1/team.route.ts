@@ -1,6 +1,12 @@
 import { Router } from "express";
 
-import { createTeamHandler, listTeamsHandler } from "../../controllers/team.controller";
+import {
+  addTeamMembersHandler,
+  createTeamHandler,
+  getTeamHandler,
+  listTeamsHandler,
+  removeTeamMemberHandler,
+} from "../../controllers/team.controller";
 import { protect } from "../../middlewares/auth.middleware";
 import { requireRole, requireWorkspace } from "../../middlewares/workspace.middleware";
 
@@ -11,5 +17,8 @@ router.use(requireWorkspace);
 
 router.get("/", listTeamsHandler);
 router.post("/", requireRole("team:manage"), createTeamHandler);
+router.get("/:teamId", getTeamHandler);
+router.post("/:teamId/members", requireRole("team:manage"), addTeamMembersHandler);
+router.delete("/:teamId/members/:userId", requireRole("team:manage"), removeTeamMemberHandler);
 
 export const teamRoutes = router;

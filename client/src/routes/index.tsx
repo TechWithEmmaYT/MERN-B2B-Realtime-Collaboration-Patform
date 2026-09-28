@@ -3,9 +3,12 @@ import { createBrowserRouter, Navigate } from 'react-router'
 import { AppLayout } from '@/layouts/app-layout'
 import SignInPage from '@/pages/auth/sign-in'
 import SignUpPage from '@/pages/auth/sign-up'
+import InvitePage from '@/pages/invite/invite-page'
 import { BoardPage } from '@/pages/board/board-page'
 import { DashboardHomePage } from '@/pages/dashboard/dashboard-home'
+import { WorkspaceMembersPage } from '@/pages/dashboard/settings/members'
 import { TeamPage } from '@/pages/dashboard/team'
+import { TeamDetailPage } from '@/pages/dashboard/team-detail'
 import CreateWorkspacePage from '@/pages/onboarding/create-workspace'
 import InviteTeamPage from '@/pages/onboarding/invite-team'
 import WorkspaceReadyPage from '@/pages/onboarding/workspace-ready'
@@ -15,6 +18,7 @@ import { PublicRoute } from '@/routes/public-route'
 
 export const router = createBrowserRouter([
   { path: '/', element: <Navigate to="/dashboard" replace /> },
+  { path: '/invite/:token', element: <InvitePage /> },
   {
     element: <PublicRoute />,
     children: [
@@ -35,6 +39,8 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <DashboardHomePage /> },
           { path: 'team', element: <TeamPage /> },
+          { path: 'teams/:teamId', element: <TeamDetailPage /> },
+          { path: 'settings/members', element: <WorkspaceMembersPage /> },
         ],
       },
       { path: '/boards/:boardId', element: <BoardPage /> },

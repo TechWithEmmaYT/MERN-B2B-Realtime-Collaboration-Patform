@@ -1,0 +1,29 @@
+/* Custom board canvas cursors.
+   --board-cursor      : cursor over the pane (arrow for Select, tool icon otherwise)
+   --board-node-cursor : cursor over nodes/edges (pointer hand for Select, tool icon otherwise)
+   Panning still shows grabbing while a drag is in progress. */
+
+.board-canvas .react-flow__pane {
+  cursor: var(--board-cursor, default) !important;
+}
+
+/* Space held (or panning enabled): ready-to-pan open hand. */
+.board-canvas .react-flow__pane.draggable {
+  cursor: grab !important;
+}
+
+.board-canvas .react-flow__pane.dragging {
+  cursor: grabbing !important;
+}
+
+.board-canvas .react-flow__node {
+  cursor: var(--board-node-cursor, pointer) !important;
+}
+
+.board-canvas .react-flow__node.dragging {
+  cursor: grabbing !important;
+}
+
+.board-canvas .react-flow__edge {
+  cursor: var(--board-node-cursor, pointer) !important;
+}

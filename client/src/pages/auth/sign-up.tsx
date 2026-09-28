@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
@@ -33,6 +33,8 @@ type SignUpValues = z.infer<typeof signUpSchema>
 export default function SignUpPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const [searchParams] = useSearchParams()
+  const redirect = searchParams.get('redirect')
 
   const form = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
@@ -43,7 +45,7 @@ export default function SignUpPage() {
     mutationFn: registerMutationFn,
     onSuccess: ({ user }) => {
       queryClient.setQueryData(CURRENT_USER_QUERY_KEY, { user })
-      navigate('/onboarding/workspace')
+      navigate(redirect?.startsWith('/') ? redirect : '/onboarding/workspace')
     },
     onError: (error: { message: string }) => toast.error(error.message),
   })
@@ -138,7 +140,7 @@ export default function SignUpPage() {
               ) : null}
             </Field>
 
-            <Button type="submit" className="w-full" disabled={isPending}>
+            <Button type="submit" className="w-full" size="lg" disabled={isPending}>
               {isPending ? <Spinner data-icon="inline-start" /> : null}
               Create account
             </Button>

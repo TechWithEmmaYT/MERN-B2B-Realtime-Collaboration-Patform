@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
@@ -32,6 +32,8 @@ type SignInValues = z.infer<typeof signInSchema>
 export default function SignInPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const [searchParams] = useSearchParams()
+  const redirect = searchParams.get('redirect')
 
   const form = useForm<SignInValues>({
     resolver: zodResolver(signInSchema),
@@ -42,7 +44,7 @@ export default function SignInPage() {
     mutationFn: loginMutationFn,
     onSuccess: ({ user }) => {
       queryClient.setQueryData(CURRENT_USER_QUERY_KEY, { user })
-      navigate('/dashboard')
+      navigate(redirect?.startsWith('/') ? redirect : '/dashboard')
     },
     onError: (error: { message: string }) => toast.error(error.message),
   })
@@ -119,7 +121,7 @@ export default function SignInPage() {
               ) : null}
             </Field>
 
-            <Button type="submit" className="w-full" disabled={isPending}>
+            <Button type="submit" className="w-full" size="lg" disabled={isPending}>
               {isPending ? <Spinner data-icon="inline-start" /> : null}
               Sign in
             </Button>

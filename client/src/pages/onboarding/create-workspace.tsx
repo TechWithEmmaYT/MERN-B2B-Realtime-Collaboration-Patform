@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowRightIcon,
   CheckCircle2Icon,
@@ -62,6 +62,7 @@ const toSlug = (value: string) =>
 
 export default function CreateWorkspacePage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const form = useForm<CreateWorkspaceValues>({
     resolver: zodResolver(schema),
@@ -95,8 +96,10 @@ export default function CreateWorkspacePage() {
 
   const { mutate, isPending } = useMutation({
     mutationFn: createWorkspaceMutationFn,
-    onSuccess: ({ workspace }) =>
-      navigate(`/onboarding/invite?workspaceId=${workspace.id}`),
+    onSuccess: ({ workspace }) => {
+      queryClient.invalidateQueries({ queryKey: ['my-workspaces'] })
+      navigate(`/onboarding/invite?workspaceId=${workspace.id}`)
+    },
     onError: (error: { message: string }) => toast.error(error.message),
   })
 

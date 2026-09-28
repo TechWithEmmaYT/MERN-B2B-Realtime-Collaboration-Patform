@@ -2,18 +2,14 @@ import heroIllustration from '@/assets/illustrations/home-illustration.png'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  ArrowUpRightIcon,
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   LayoutDashboardIcon,
   LayoutGridIcon,
   ListIcon,
-  MapIcon,
-  MessageCircleMoreIcon,
   MoreVerticalIcon,
   PlusIcon,
-  ShapesIcon,
   StarIcon,
   UsersIcon,
 } from 'lucide-react'
@@ -26,6 +22,7 @@ import {
   type BoardTemplate,
   type BoardTemplateId,
 } from '@/components/boards/board-templates'
+import { getBoardIcon } from '@/components/boards/board-icon'
 import {
   CreateBoardDialog,
   type CreateBoardValues,
@@ -57,6 +54,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useAuth } from '@/context/auth-context'
+import { BoardGrid } from '@/components/boards/board-grid'
 import { useTeams } from '@/context/teams-context'
 import { createBoardMutationFn, getBoardsQueryFn } from '@/lib/api'
 import { cn } from '@/lib/utils'
@@ -75,26 +73,6 @@ type Board = {
   starred?: boolean
 }
 
-const templateIcons: Record<BoardTemplateId, Pick<Board, 'icon' | 'iconClass'>> = {
-  blank: { icon: LayoutDashboardIcon, iconClass: 'bg-muted text-foreground' },
-  brainstorm: {
-    icon: MessageCircleMoreIcon,
-    iconClass: 'bg-sky-100 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400',
-  },
-  flowchart: {
-    icon: ShapesIcon,
-    iconClass: 'bg-amber-50 text-amber-500 dark:bg-amber-500/15',
-  },
-  roadmap: {
-    icon: ArrowUpRightIcon,
-    iconClass: 'bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400',
-  },
-  journey: {
-    icon: MapIcon,
-    iconClass: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400',
-  },
-}
-
 const initialsOf = (name: string) =>
   name
     .split(/\s+/)
@@ -104,8 +82,7 @@ const initialsOf = (name: string) =>
     .join('')
 
 const mapBoard = (board: ApiBoard): Board => {
-  const { icon, iconClass } =
-    templateIcons[board.iconKey as BoardTemplateId] ?? templateIcons.blank
+  const { icon, iconClass } = getBoardIcon(board.iconKey)
   return {
     id: board.id,
     teamId: board.teamId,
@@ -129,6 +106,7 @@ export function DashboardHomePage() {
   const { teams, selectedTeam, selectTeam } = useTeams()
   const queryClient = useQueryClient()
   const [view, setView] = useState<'grid' | 'list'>('list')
+  const navigate = useNavigate()
   const [createOpen, setCreateOpen] = useState(false)
   const [createTemplate, setCreateTemplate] = useState<BoardTemplateId>('blank')
 
@@ -240,7 +218,11 @@ export function DashboardHomePage() {
             <Spinner className="size-6" />
           </div>
         ) : teamBoards.length > 0 ? (
-          <BoardsTable boards={teamBoards} />
+          view === 'grid' ? (
+            <BoardGrid boards={teamBoards} onOpen={(id) => navigate(`/boards/${id}`)} />
+          ) : (
+            <BoardsTable boards={teamBoards} />
+          )
         ) : (
           <Empty className="border border-dashed">
             <EmptyHeader>

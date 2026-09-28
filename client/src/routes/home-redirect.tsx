@@ -5,13 +5,15 @@ import { FullPageSpinner } from '@/components/full-page-spinner'
 import { getMyWorkspacesQueryFn } from '@/lib/api'
 
 export function DashboardHomeRedirect() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: ['my-workspaces'],
     queryFn: getMyWorkspacesQueryFn,
     staleTime: 0,
   })
 
-  if (isLoading) return <FullPageSpinner />
+  // Wait through the initial load AND any refetch, so we never decide on stale
+  // cached data (e.g. right after creating a workspace or accepting an invite).
+  if (isLoading || isFetching) return <FullPageSpinner />
 
   const workspace = data?.workspaces[0]
   if (workspace) return <Navigate to={`/dashboard/org/${workspace.id}`} replace />

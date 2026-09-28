@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 
+import { getLiveblocks } from "../config/liveblocks.config";
 import { Board } from "../models/board.model";
 import { Membership } from "../models/membership.model";
 import { TeamMembership } from "../models/team-membership.model";
@@ -31,18 +32,40 @@ export const createBoard = async (
     throw new ForbiddenException("You are not a member of this team");
   }
 
+  const boardId = new mongoose.Types.ObjectId();
+  const roomId = `board_${boardId.toString()}`;
   const iconKey = input.templateKey ?? "blank";
 
-  return Board.create({
+  const board = await Board.create({
+    _id: boardId,
     workspaceId,
     teamId: input.teamId,
-    roomId: `board_${new mongoose.Types.ObjectId().toString()}`,
+    roomId,
     title: input.title.trim(),
     description: input.description ?? "",
     iconKey,
     templateKey: input.templateKey ?? null,
     ownerId,
   });
+
+  try {
+    await getLiveblocks().getOrCreateRoom(roomId, {
+      organizationId: workspaceId,
+      defaultAccesses: [],
+      groupsAccesses: { [input.teamId]: ["room:write"] },
+      metadata: {
+        boardId: boardId.toString(),
+        workspaceId,
+        teamId: input.teamId,
+        title: board.title,
+      },
+    });
+  } catch (error) {
+    await Board.findByIdAndDelete(boardId);
+    throw error;
+  }
+
+  return board;
 };
 
 export const listBoards = async (

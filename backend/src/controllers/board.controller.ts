@@ -1,7 +1,12 @@
 import { HTTPSTATUS } from "../config/http-status.config";
 import { asyncHandler } from "../middlewares/asyncHandler.middleware";
 import { createBoard, getBoard, listBoards } from "../services/board.service";
-import { createBoardSchema, listBoardsQuerySchema } from "../validators/board.validator";
+import { getBoardTemplate } from "../templates";
+import {
+  boardTemplateParamsSchema,
+  createBoardSchema,
+  listBoardsQuerySchema,
+} from "../validators/board.validator";
 
 export const listBoardsHandler = asyncHandler(async (request, response) => {
   const { teamId } = listBoardsQuerySchema.parse(request.query);
@@ -49,4 +54,11 @@ export const getBoardHandler = asyncHandler(async (request, response) => {
   const board = await getBoard(request.params.boardId as string, request.user!.id);
 
   response.status(HTTPSTATUS.OK).json({ success: true, data: { board } });
+});
+
+export const getBoardTemplateHandler = asyncHandler(async (request, response) => {
+  const { key } = boardTemplateParamsSchema.parse(request.params);
+  const template = getBoardTemplate(key);
+
+  response.status(HTTPSTATUS.OK).json({ success: true, data: { template: { key, ...template } } });
 });
