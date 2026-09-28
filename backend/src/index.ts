@@ -2,6 +2,9 @@ const dns = require('dns');
 // Force Node.js to use public DNS servers
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 
+
+import path from "node:path";
+
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
@@ -34,6 +37,17 @@ app.get("/health", (_request, response) => {
 });
 
 app.use("/api/v1", apiLimiter, routes);
+
+// In production the built client (client/dist) is served from this same process,
+// so a single Render web service hosts both the API and the SPA. Non-API GET
+// requests fall back to index.html for client-side routing.
+if (Env.NODE_ENV === "production") {
+  const clientPath = path.resolve(__dirname, "../../client/dist");
+  app.use(express.static(clientPath));
+  app.get(/^(?!\/api).*/, (_request, response) => {
+    response.sendFile(path.join(clientPath, "index.html"));
+  });
+}
 
 app.use((request, _response, next) => {
   next(new NotFoundException(`Route not found: ${request.method} ${request.originalUrl}`));

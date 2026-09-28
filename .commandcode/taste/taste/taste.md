@@ -189,3 +189,8 @@
 - Prefers saving a restore point (version-history snapshot) before the AI agent mutates board state, so automated changes are undoable. Confidence: 0.7
 - Prefers the AI agent to appear as present on the board (via Liveblocks presence) while it is acting, then fade out when done, so collaborators can see the agent at work. Confidence: 0.65
 - Prefers each AI tool invocation to be surfaced as a visible, collapsible step in the chat (tool name, parameters, result/status) rather than silent mutations, keeping agent actions transparent and auditable. Confidence: 0.7
+- Prefers not to add new libraries for UI/design work when the existing stack already covers it — scopes design tasks to Tailwind + existing shadcn/ui components ("no new libraries") rather than pulling in animation/UI packages. Confidence: 0.8
+- Prefers side panels (e.g. the AI agent) to sit beside the canvas and push/reflow it via flex layout so nothing is hidden behind the panel, rather than overlaying on top of the canvas. Confidence: 0.8
+- Prefers selected canvas objects to be attachable as context to an AI chat message: rendered as small pills/chips (icon + label) on the sent user message and cleared from the input box after send. Confidence: 0.7
+- For production deploys, prefers a single-service setup where the Express backend serves the built client (static files + SPA fallback for non-API routes) with relative `/api` URLs and a Vite dev proxy for local dev. Confidence: 0.7
+- For marketing/landing pages, prefers a light, minimal, centered hero with large feature headings, per-feature screenshots framed in a browser-window (mac traffic-light dots) chrome, subtle scroll-reveal motion, and an edge-to-edge (full-width) final CTA band. Confidence: 0.6

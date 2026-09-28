@@ -1,4 +1,4 @@
-import { API } from '@/lib/axios-client'
+import { API, API_BASE_URL } from '@/lib/axios-client'
 import type {
   AcceptInviteResponse,
   ApiSuccessResponse,
@@ -58,8 +58,7 @@ export const getCurrentUserQueryFn = async () => {
   return data.data
 }
 
-export const googleAuthUrl = () =>
-  `${import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api/v1'}/auth/google`
+export const googleAuthUrl = () => `${API_BASE_URL}/auth/google`
 
 /* ------------------------------ invitations ------------------------------- */
 
@@ -296,8 +295,7 @@ export const stopAiChatMutationFn = async ({
 /* ------------------------------- liveblocks -------------------------------- */
 
 export const liveblocksAuthEndpoint = async (room?: string) => {
-  const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api/v1'
-  const response = await fetch(`${baseURL}/liveblocks-auth`, {
+  const response = await fetch(`${API_BASE_URL}/liveblocks-auth`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',

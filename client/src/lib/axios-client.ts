@@ -2,10 +2,13 @@ import axios, { AxiosError } from 'axios'
 
 import type { ApiErrorResponse } from '@/types'
 
-const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api/v1'
+// Relative by default so the same origin (the backend serving the built client in
+// production, or the Vite dev proxy in development) handles the API. Override with
+// VITE_API_URL when the API lives on a different origin.
+export const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/api/v1'
 
 export const API = axios.create({
-  baseURL,
+  baseURL: API_BASE_URL,
   withCredentials: true,
   timeout: 20000,
   headers: {
