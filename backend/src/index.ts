@@ -22,7 +22,25 @@ import { logger } from "./utils/logger";
 
 const app = express();
 
-app.use(helmet());
+// Render (and most hosts) put a proxy in front of the app: trust one hop so
+// req.ip is the visitor's IP (per-user rate limits) and secure cookies work.
+app.set("trust proxy", 1);
+
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        // Liveblocks: REST (auth, files) and the realtime WebSocket.
+        "connect-src": ["'self'", "https://*.liveblocks.io", "wss://*.liveblocks.io"],
+        // Avatars (Google), Liveblocks file uploads, pasted images.
+        "img-src": ["'self'", "data:", "blob:", "https:"],
+        "media-src": ["'self'", "blob:", "https:"],
+        "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        "font-src": ["'self'", "data:", "https://fonts.gstatic.com"],
+      },
+    },
+  }),
+);
 app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 app.use(cookieParser());
