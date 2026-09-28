@@ -1,9 +1,9 @@
 // Board templates are expressed in the same shape React Flow uses on the client,
 // so the client can seed a board's Storage directly without any transformation.
 
-export type TemplateNodeType = "note" | "text" | "shape" | "frame";
+export type TemplateNodeType = "note" | "text" | "shape" | "frame" | "path";
 
-export type TemplateShape = "rectangle" | "oval" | "rhombus" | "triangle";
+export type TemplateShape = "rectangle" | "oval" | "rhombus" | "triangle" | "block-arrow";
 
 // Connection points every node has (see NodeHandles on the client).
 export type TemplateHandle = "top" | "right" | "bottom" | "left";
@@ -17,6 +17,10 @@ export type TemplateNode = {
     label: string;
     color?: string;
     shape?: TemplateShape;
+    // Pen strokes ("path" nodes): points relative to the node, like the Draw tool.
+    points?: { x: number; y: number }[];
+    size?: "thin" | "medium" | "thick";
+    mode?: "pen" | "highlighter";
   };
   width?: number;
   height?: number;

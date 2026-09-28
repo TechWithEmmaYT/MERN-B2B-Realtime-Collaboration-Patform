@@ -43,6 +43,11 @@ declare global {
       suggestions?: string[]
       // True while the reply is still streaming in.
       streaming?: boolean
+      // Canvas objects the user selected and attached to their message.
+      context?: Array<{
+        type: string
+        label: string
+      }>
       // Board tools the agent invoked for this reply, shown as steps in the chat.
       tools?: Array<{
         type: string

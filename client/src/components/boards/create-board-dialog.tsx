@@ -43,7 +43,7 @@ import { teamInitials, useTeams } from '@/context/teams-context'
 import { cn } from '@/lib/utils'
 
 const schema = z.object({
-  templateId: z.enum(['blank', 'brainstorm', 'flowchart', 'roadmap', 'journey']),
+  templateId: z.enum(['blank', 'brainstorm', 'flowchart', 'roadmap', 'journey', 'launch']),
   title: z.string().trim().max(80, 'Keep the title under 80 characters'),
   teamId: z.string().min(1, 'Pick a team'),
   description: z.string().trim().max(200, 'Keep it under 200 characters'),
@@ -138,7 +138,7 @@ export function CreateBoardDialog({
                     <div
                       role="radiogroup"
                       aria-label="Board template"
-                      className="grid grid-cols-2 gap-3 sm:grid-cols-5"
+                      className="grid grid-cols-2 gap-3 sm:grid-cols-3"
                     >
                       {boardTemplates.map((template) => {
                         const selected = field.value === template.id

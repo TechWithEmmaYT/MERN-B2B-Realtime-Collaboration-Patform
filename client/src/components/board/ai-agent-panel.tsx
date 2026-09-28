@@ -70,6 +70,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useAuth } from '@/context/auth-context'
 import { aiChatMutationFn, stopAiChatMutationFn } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import type { BoardContextItem } from '@/types/flow'
 
 
 type FeedMessageData = Liveblocks['FeedMessageData']
@@ -89,13 +90,39 @@ const TOOL_TITLES: Record<string, string> = {
   organizeLayout: 'Tidy layout',
 }
 
-export function AiAgentPanel({ boardId, onClose }: { boardId: string; onClose: () => void }) {
+export function AiAgentPanel({
+  boardId,
+  selectedContext,
+  onSelectObjects,
+  onClearContext,
+  onClose,
+  initialPrompt,
+  onInitialPromptConsumed,
+}: {
+  boardId: string
+  selectedContext: BoardContextItem[]
+  onSelectObjects: () => void
+  onClearContext: () => void
+  onClose: () => void
+  // A prompt from the board's empty state: sent in a new chat, then consumed.
+  initialPrompt?: { text: string; id: number } | null
+  onInitialPromptConsumed?: () => void
+}) {
   const { user } = useAuth()
   const firstName = user?.name?.trim().split(/\s+/)[0] || 'there'
 
   return (
     <aside className="flex w-96 shrink-0 flex-col border-l bg-background">
-      <Chat boardId={boardId} firstName={firstName} onClose={onClose} />
+      <Chat
+        boardId={boardId}
+        firstName={firstName}
+        selectedContext={selectedContext}
+        onSelectObjects={onSelectObjects}
+        onClearContext={onClearContext}
+        onClose={onClose}
+        initialPrompt={initialPrompt}
+        onInitialPromptConsumed={onInitialPromptConsumed}
+      />
     </aside>
   )
 }
@@ -103,11 +130,21 @@ export function AiAgentPanel({ boardId, onClose }: { boardId: string; onClose: (
 function Chat({
   boardId,
   firstName,
+  selectedContext,
+  onSelectObjects,
+  onClearContext,
   onClose,
+  initialPrompt,
+  onInitialPromptConsumed,
 }: {
   boardId: string
   firstName: string
+  selectedContext: BoardContextItem[]
+  onSelectObjects: () => void
+  onClearContext: () => void
   onClose: () => void
+  initialPrompt?: { text: string; id: number } | null
+  onInitialPromptConsumed?: () => void
 }) {
   const { feeds } = useFeeds()
   const chats = useMemo(
@@ -124,6 +161,15 @@ function Chat({
 
   const newChat = useCallback(() => setFeedId(nanoid()), [])
 
+  // A prompt from the empty state: open a fresh chat that sends it right away.
+  const [autoPrompt, setAutoPrompt] = useState<string | null>(null)
+  useEffect(() => {
+    if (!initialPrompt) return
+    setFeedId(nanoid())
+    setAutoPrompt(initialPrompt.text)
+    onInitialPromptConsumed?.()
+  }, [initialPrompt, onInitialPromptConsumed])
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <PanelHeader
@@ -133,21 +179,51 @@ function Chat({
         feedId={feedId}
         onSelectChat={setFeedId}
       />
-      <ChatWindow key={feedId} boardId={boardId} feedId={feedId} firstName={firstName} />
+      <ChatWindow
+        key={feedId}
+        boardId={boardId}
+        feedId={feedId}
+        feedExists={chats.some((chat) => chat.feedId === feedId)}
+        autoPrompt={autoPrompt}
+        onAutoPromptSent={() => setAutoPrompt(null)}
+        firstName={firstName}
+        selectedContext={selectedContext}
+        onSelectObjects={onSelectObjects}
+        onClearContext={onClearContext}
+      />
     </div>
   )
 }
 
+// Stands in for a chat whose feed isn't created yet (see below).
+const NO_FEED = '__no-feed__'
+
 function ChatWindow({
   boardId,
   feedId,
+  feedExists,
+  autoPrompt,
+  onAutoPromptSent,
   firstName,
+  selectedContext,
+  onSelectObjects,
+  onClearContext,
 }: {
   boardId: string
   feedId: string
+  feedExists: boolean
+  autoPrompt: string | null
+  onAutoPromptSent: () => void
   firstName: string
+  selectedContext: BoardContextItem[]
+  onSelectObjects: () => void
+  onClearContext: () => void
 }) {
-  const { messages } = useFeedMessages(feedId)
+  // A new chat has no feed until the first message. Loading a missing feed fails
+  // and Liveblocks never retries it, so the chat would stay stuck on "Thinking…".
+  // Only load messages once the feed exists (listed in useFeeds, or created here).
+  const [created, setCreated] = useState(false)
+  const { messages } = useFeedMessages(feedExists || created ? feedId : NO_FEED)
   const createFeed = useCreateFeed()
   const createFeedMessage = useCreateFeedMessage()
   const deleteFeedMessage = useDeleteFeedMessage()
@@ -192,7 +268,7 @@ function ChatWindow({
   }, [waitingForReply, selfPrompting, feedId, updateMyPresence])
   useEffect(() => () => updateMyPresence({ promptingFeedId: null }), [updateMyPresence])
 
-  const ensuredFeeds = useRef(new Set(list.length > 0 ? [feedId] : []))
+  const ensuredFeeds = useRef(new Set(feedExists ? [feedId] : []))
   const ensureFeed = useCallback(
     async (id: string, title: string) => {
       if (ensuredFeeds.current.has(id)) return
@@ -202,6 +278,7 @@ function ChatWindow({
       } catch {
         // Feed already exists (maybe created by someone else).
       }
+      setCreated(true)
     },
     [createFeed],
   )
@@ -212,9 +289,21 @@ function ChatWindow({
   // Blocks double sends (e.g. fast clicks on a quick action or suggestion).
   const inFlight = useRef(false)
 
+  // The currently selected canvas objects, formatted for the model.
+  const contextText = useMemo(
+    () =>
+      selectedContext.length
+        ? selectedContext
+            // The id lets the agent's tools act on exactly these objects.
+            .map((item) => `- [${item.type}] ${item.label || '(untitled)'} (id: ${item.id})`)
+            .join('\n')
+        : undefined,
+    [selectedContext],
+  )
+
   const requestReply = useCallback(
     (history: { role: 'user' | 'assistant'; content: string }[]) => {
-      aiChatMutationFn({ boardId, feedId, messages: history })
+      aiChatMutationFn({ boardId, feedId, messages: history, context: contextText })
         .catch((error: { message?: string }) => {
           setPending(null)
           toast.error(error.message ?? 'The AI agent could not reply. Try again.')
@@ -223,7 +312,7 @@ function ChatWindow({
           inFlight.current = false
         })
     },
-    [boardId, feedId],
+    [boardId, feedId, contextText],
   )
 
   const send = useCallback(
@@ -243,6 +332,8 @@ function ChatWindow({
           userId: user?.id ?? '',
           name: user?.name ?? 'You',
           avatar: user?.avatarUrl ?? '',
+          // Attach the selected canvas objects as pills on the message.
+          context: selectedContext.map(({ type, label }) => ({ type, label })),
         })
       } catch {
         setPending(null)
@@ -255,8 +346,10 @@ function ChatWindow({
         ...list.map((message) => ({ role: message.data.role, content: message.data.content })),
         { role: 'user' as const, content },
       ])
+      // The context now lives on the message, so drop the input-box pills.
+      onClearContext()
     },
-    [ensureFeed, createFeedMessage, user, list, feedId, isStreaming, requestReply],
+    [ensureFeed, createFeedMessage, user, list, feedId, isStreaming, requestReply, selectedContext, onClearContext],
   )
 
   // Regenerate: drop this reply and ask again with the conversation before it.
@@ -289,6 +382,15 @@ function ChatWindow({
     setPending(null)
     void stopAiChatMutationFn({ boardId, feedId }).catch(() => {})
   }, [boardId, feedId])
+
+  // Send the empty-state prompt once this (new) chat is open.
+  useEffect(() => {
+    if (!autoPrompt) return
+    onAutoPromptSent()
+    void send(autoPrompt)
+    // Runs once per prompt; `send` changes on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPrompt])
 
   // Follow-up suggestions from the latest finished reply.
   const followUps =
@@ -333,13 +435,44 @@ function ChatWindow({
       </Conversation>
 
       <div className="flex flex-col gap-2 border-t p-3">
-        <button
-          type="button"
-          className="flex items-center gap-2 rounded-lg bg-muted/70 px-3 py-2 text-left text-xs text-muted-foreground transition hover:bg-muted"
-        >
-          <MousePointerClickIcon className="size-4 shrink-0" />
-          Select objects on the canvas to add context
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onSelectObjects}
+            className={cn(
+              'flex flex-1 items-center gap-2 rounded-lg bg-muted/70 px-3 py-2 text-left text-xs text-muted-foreground transition hover:bg-muted',
+              selectedContext.length > 0 && 'text-foreground',
+            )}
+          >
+            <MousePointerClickIcon className="size-4 shrink-0" />
+            {selectedContext.length > 0
+              ? `${selectedContext.length} object${selectedContext.length === 1 ? '' : 's'} selected`
+              : 'Select objects on the canvas to add context'}
+          </button>
+          {selectedContext.length > 0 ? (
+            <button
+              type="button"
+              aria-label="Clear selected context"
+              onClick={onClearContext}
+              className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground"
+            >
+              <XIcon className="size-4" />
+            </button>
+          ) : null}
+        </div>
+
+        {selectedContext.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {selectedContext.map((item) => (
+              <span
+                key={item.id}
+                className="max-w-full truncate rounded-full border bg-muted px-2 py-1 text-xs text-muted-foreground"
+              >
+                {item.label || item.type}
+              </span>
+            ))}
+          </div>
+        ) : null}
 
         <PromptInput onSubmit={(message) => send(message.text)}>
           <PromptInputBody>
@@ -416,6 +549,20 @@ function FeedMessage({
         <div className="flex flex-col gap-2 px-1">
           {data.tools.map((step) => (
             <BoardTool key={step.toolCallId} step={step} />
+          ))}
+        </div>
+      ) : null}
+
+      {!isAssistant && data.context?.length ? (
+        <div className="flex flex-wrap justify-end gap-1.5 px-1">
+          {data.context.map((item, index) => (
+            <span
+              key={`${index}-${item.label}`}
+              className="flex items-center gap-1 rounded-full border bg-primary/10 px-2 py-0.5 text-xs text-primary"
+            >
+              <MousePointerClickIcon className="size-3 shrink-0" />
+              <span className="max-w-40 truncate">{item.label || item.type}</span>
+            </span>
           ))}
         </div>
       ) : null}

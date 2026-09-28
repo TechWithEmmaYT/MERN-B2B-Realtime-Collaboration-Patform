@@ -38,6 +38,7 @@ import {
   NOTE_COLORS,
   SHAPE_MENU,
   STROKE_SIZES,
+  type BoardContextItem,
   type DrawToolMode,
   type FlowEdge,
   type FlowNode,
@@ -164,6 +165,9 @@ function BoardRoom({
   const [drawMenuOpen, setDrawMenuOpen] = useState(false)
   const [focusedThreadId, setFocusedThreadId] = useState<string | null>(null)
   const [focusPan, setFocusPan] = useState<{ x: number; y: number } | null>(null)
+  const [selectedContext, setSelectedContext] = useState<BoardContextItem[]>([])
+  // A prompt from the empty state, sent by the AI panel in a new chat.
+  const [aiPrompt, setAiPrompt] = useState<{ text: string; id: number } | null>(null)
   const status = useStatus()
   const isConnected = status === 'connected'
 
@@ -279,6 +283,11 @@ function BoardRoom({
               onFocusChange={setFocusedThreadId}
               focusPan={focusPan}
               onFocusPanConsumed={() => setFocusPan(null)}
+              onSelectionChange={setSelectedContext}
+              onAskAi={(text) => {
+                setAiPrompt({ text, id: Date.now() })
+                setAiAgentOpen(true)
+              }}
             />
             <BoardToolbar
               activeTool={activeTool}
@@ -387,7 +396,15 @@ function BoardRoom({
             </div>
 
             {aiAgentOpen ? (
-              <AiAgentPanel boardId={board.id} onClose={() => setAiAgentOpen(false)} />
+              <AiAgentPanel
+                boardId={board.id}
+                selectedContext={selectedContext}
+                onSelectObjects={() => selectTool('select')}
+                onClearContext={() => setSelectedContext([])}
+                onClose={() => setAiAgentOpen(false)}
+                initialPrompt={aiPrompt}
+                onInitialPromptConsumed={() => setAiPrompt(null)}
+              />
             ) : null}
           </div>
         </ReactFlowProvider>

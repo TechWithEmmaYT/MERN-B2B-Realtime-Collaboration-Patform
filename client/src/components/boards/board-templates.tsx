@@ -1,7 +1,7 @@
 import { PlusIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-export type BoardTemplateId = 'blank' | 'brainstorm' | 'flowchart' | 'roadmap' | 'journey'
+export type BoardTemplateId = 'blank' | 'brainstorm' | 'flowchart' | 'roadmap' | 'journey' | 'launch'
 
 export type BoardTemplate = {
   id: BoardTemplateId
@@ -40,6 +40,12 @@ export const boardTemplates: BoardTemplate[] = [
     name: 'User journey map',
     description: 'Follow a user through each stage',
     illustration: <JourneyIllustration />,
+  },
+  {
+    id: 'launch',
+    name: 'Product launch',
+    description: 'Ideas, flow, roadmap and goals in one board',
+    illustration: <LaunchIllustration />,
   },
 ]
 
@@ -104,6 +110,41 @@ function RoadmapIllustration() {
           ))}
         </g>
       ))}
+    </svg>
+  )
+}
+
+function LaunchIllustration() {
+  return (
+    <svg viewBox="0 0 120 80" className="h-full w-auto">
+      {/* Brainstorm frame with notes, and a hand-drawn circle */}
+      <rect x="2" y="4" width="44" height="34" rx="3" fill="#FEF9C3" />
+      <rect x="7" y="10" width="10" height="10" rx="1" fill="#FDE68A" />
+      <rect x="20" y="10" width="10" height="10" rx="1" fill="#F9A8D4" />
+      <rect x="33" y="10" width="10" height="10" rx="1" fill="#93C5FD" />
+      <rect x="7" y="23" width="10" height="10" rx="1" fill="#86EFAC" />
+      <rect x="20" y="23" width="10" height="10" rx="1" fill="#C4B5FD" />
+      <ellipse cx="25" cy="15" rx="8" ry="7.5" stroke="#EF4444" strokeWidth={1} fill="none" />
+      {/* User flow */}
+      <rect x="52" y="4" width="66" height="34" rx="3" fill="#F4F4F5" />
+      <ellipse cx="62" cy="21" rx="6" ry="4" fill="#93C5FD" />
+      <path d="M84 14 L90 21 L84 28 L78 21 Z" fill="#FDE047" />
+      <rect x="98" y="10" width="14" height="7" rx="1.5" fill="#B8A4FF" />
+      <rect x="98" y="25" width="14" height="7" rx="1.5" fill="#FFA94D" />
+      <path d="M68 21 H78 M90 21 H94 V13.5 H98 M94 21 V28.5 H98" stroke="#71717A" strokeWidth={0.8} fill="none" />
+      {/* Roadmap */}
+      <rect x="2" y="44" width="72" height="32" rx="3" fill="#DBEAFE" />
+      <rect x="6" y="48" width="18" height="6" rx="1.5" fill="#B8A4FF" />
+      <rect x="29" y="48" width="18" height="6" rx="1.5" fill="#F9A8D4" />
+      <rect x="52" y="48" width="18" height="6" rx="1.5" fill="#86EFAC" />
+      {[6, 29, 52].map((x) => (
+        <rect key={x} x={x} y="58" width="9" height="9" rx="1" fill="#FFF59D" />
+      ))}
+      {/* Goals with a rocket doodle */}
+      <rect x="80" y="44" width="38" height="32" rx="3" fill="#F4F4F5" />
+      <path d="M86 70 L92 52 L98 70 Z" fill="#FFA94D" />
+      <path d="M108 50 C112 55 112 62 111 68 H105 C104 62 104 55 108 50 Z" stroke="#1F1F1F" strokeWidth={0.9} fill="none" />
+      <path d="M106 70 L108 74 L110 70" stroke="#F97316" strokeWidth={1} fill="none" />
     </svg>
   )
 }

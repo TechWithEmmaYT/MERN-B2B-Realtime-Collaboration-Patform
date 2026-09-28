@@ -154,7 +154,7 @@ export function DashboardHomePage() {
           Start from a template
           <ChevronRightIcon className="size-4 text-muted-foreground" />
         </button>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           {boardTemplates.map((template) => (
             <TemplateCard
               key={template.id}

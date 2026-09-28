@@ -390,12 +390,12 @@ What we change from it:
 
 #### Model
 
-- **`anthropic/claude-sonnet-5`** through the AI Gateway (changed 2026-09-28 from
-  `openai/gpt-4o-mini`, which handled the drawing and layout tools poorly).
-- No `providerOptions` thinking settings. Sonnet 5 thinks adaptively by default and **rejects
+- **`anthropic/claude-opus-5`** through the AI Gateway (changed 2026-09-28:
+  `openai/gpt-4o-mini` handled the drawing and layout tools poorly, then Sonnet 5, then Opus 5).
+- No `providerOptions` thinking settings. Opus 5 thinks adaptively by default and **rejects
   `budgetTokens` with a 400**, so don't add it back.
 - `stopWhen: stepCountIs(8)` so the agent can call several tools per message.
-- Sonnet costs more per message than gpt-4o-mini, so watch the gateway credits.
+- Opus 5 is the strongest and priciest option (about 2.5× Sonnet 5 per token), so watch the gateway credits. To save cost, switch `DEFAULT_MODEL` back to `anthropic/claude-sonnet-5`; nothing else changes.
 
 Read the example's code before building the panel: it shows which AI Elements components it
 installs and how it maps feed messages into them.

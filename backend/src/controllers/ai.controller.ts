@@ -10,10 +10,10 @@ import { aiChatSchema, stopAiChatSchema } from "../validators/ai.validator";
 // reaches everyone through the feed, so the HTTP request doesn't wait for it —
 // waiting made long replies hit the client's 20s request timeout.
 export const aiChatHandler = asyncHandler(async (request, response) => {
-  const { feedId, messages } = aiChatSchema.parse(request.body);
+  const { feedId, messages, context } = aiChatSchema.parse(request.body);
   const board = await getBoard(request.params.boardId as string, request.user!.id);
 
-  void streamAiReply({ roomId: board.roomId, feedId, messages }).catch((error) => {
+  void streamAiReply({ roomId: board.roomId, feedId, messages, context }).catch((error) => {
     logger.error("AI reply failed", {
       boardId: request.params.boardId,
       feedId,

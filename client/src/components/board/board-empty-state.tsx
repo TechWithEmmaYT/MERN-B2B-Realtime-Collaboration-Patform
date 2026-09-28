@@ -1,4 +1,5 @@
 import { ArrowUpIcon, SparklesIcon } from 'lucide-react'
+import { useState, type FormEvent } from 'react'
 
 import { boardTemplates } from '@/components/boards/board-templates'
 
@@ -12,9 +13,22 @@ const suggestions = [
 
 export function BoardEmptyState({
   onSelectTemplate,
+  onAskAi,
 }: {
   onSelectTemplate: (key: string) => void
+  // Opens the AI panel and sends the prompt in a new chat.
+  onAskAi: (prompt: string) => void
 }) {
+  const [prompt, setPrompt] = useState('')
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault()
+    const text = prompt.trim()
+    if (!text) return
+    onAskAi(text)
+    setPrompt('')
+  }
+
   return (
     <div className="pointer-events-auto flex flex-col items-center gap-8 px-6">
       <div className="flex flex-col items-center gap-2 text-center">
@@ -26,7 +40,7 @@ export function BoardEmptyState({
         </p>
       </div>
 
-      <div className="grid w-full max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid w-full max-w-4xl grid-cols-2 gap-3 sm:grid-cols-5">
         {templates.map((template) => (
           <button
             key={template.id}
@@ -43,27 +57,34 @@ export function BoardEmptyState({
       </div>
 
       <div className="flex w-full max-w-xl flex-col gap-3">
-        <div className="flex items-center gap-2 rounded-xl border bg-background p-2 shadow-sm">
+        <form
+          onSubmit={submit}
+          className="flex items-center gap-2 rounded-xl border bg-background p-2 shadow-sm"
+        >
           <SparklesIcon className="size-5 shrink-0 text-muted-foreground" />
           <input
             type="text"
+            value={prompt}
+            onChange={(event) => setPrompt(event.target.value)}
             placeholder="Ask AI to create anything..."
             className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
           <button
-            type="button"
+            type="submit"
             aria-label="Send"
-            className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground"
+            disabled={!prompt.trim()}
+            className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition disabled:opacity-40"
           >
             <ArrowUpIcon className="size-4" />
           </button>
-        </div>
+        </form>
 
         <div className="flex flex-wrap justify-center gap-2">
           {suggestions.map((suggestion) => (
             <button
               key={suggestion}
               type="button"
+              onClick={() => onAskAi(suggestion)}
               className="rounded-full border px-3 py-1.5 text-sm text-muted-foreground transition hover:bg-muted"
             >
               {suggestion}

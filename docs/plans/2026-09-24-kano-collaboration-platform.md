@@ -333,8 +333,8 @@ build it as a custom `path` node sized to its stroke bounds.
 ### Phase 10 — AI agent
 
 - [x] Install `ai` on the backend. Models go through the Vercel AI Gateway
-      (`AI_GATEWAY_API_KEY`); the model is `anthropic/claude-sonnet-5` (2026-09-28), with no
-      `budgetTokens` (Sonnet 5 returns a 400 for it). Details in the notes' AI Agent section.
+      (`AI_GATEWAY_API_KEY`); the model is `anthropic/claude-opus-5` (2026-09-28), with no
+      `budgetTokens` (Opus 5 returns a 400 for it). Details in the notes' AI Agent section.
 - [x] `POST /api/v1/ai/boards/:boardId/chat` — authorize board access, reply `202` at once,
       then stream in the background (a long reply no longer hits the 20s axios timeout).
       A stop endpoint cancels the stream.
@@ -388,7 +388,7 @@ build it as a custom `path` node sized to its stroke bounds.
 - Google OAuth links to an existing account when the verified email matches; no separate
   account-linking UI.
 - Invitations expire after 7 days. A board belongs to exactly one team.
-- One AI model (Claude Sonnet 5 via the Vercel AI Gateway), with a per-workspace daily cap.
+- One AI model (Claude Opus 5 via the Vercel AI Gateway), with a per-workspace daily cap.
 - Boards and workspaces are archived (soft-deleted), not hard-deleted.
 
 ---

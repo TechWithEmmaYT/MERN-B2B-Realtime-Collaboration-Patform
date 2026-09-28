@@ -1,6 +1,7 @@
 import { brainstormTemplate } from "./brainstorm";
 import { flowchartTemplate } from "./flowchart";
 import { journeyTemplate } from "./journey";
+import { launchTemplate } from "./launch";
 import { roadmapTemplate } from "./roadmap";
 import type { BoardTemplateContent } from "./types";
 
@@ -11,6 +12,7 @@ export const BOARD_TEMPLATE_KEYS = [
   "flowchart",
   "roadmap",
   "journey",
+  "launch",
 ] as const;
 
 export type BoardTemplateKey = (typeof BOARD_TEMPLATE_KEYS)[number];
@@ -20,6 +22,7 @@ const TEMPLATES: Record<string, BoardTemplateContent> = {
   flowchart: flowchartTemplate,
   roadmap: roadmapTemplate,
   journey: journeyTemplate,
+  launch: launchTemplate,
 };
 
 /** Returns the template's nodes + edges, or `null` for blank/unknown keys. */

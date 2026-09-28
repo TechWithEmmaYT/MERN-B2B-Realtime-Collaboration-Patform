@@ -4,7 +4,9 @@ import {
   useCanRedo,
   useCanUndo,
   useMutation,
+  shallow,
   useOther,
+  useOthers,
   useRedo,
   useStatus,
   useUndo,
@@ -175,6 +177,8 @@ type BoardCanvasProps = {
   focusPan: { x: number; y: number } | null
   onFocusPanConsumed: () => void
   onSelectionChange?: (items: BoardContextItem[]) => void
+  // Empty-state AI prompt (typed or a suggestion pill).
+  onAskAi: (prompt: string) => void
 }
 
 export function BoardCanvas({
@@ -193,6 +197,7 @@ export function BoardCanvas({
   focusPan,
   onFocusPanConsumed,
   onSelectionChange,
+  onAskAi,
 }: BoardCanvasProps) {
   const {
     nodes: flowNodes,
@@ -233,6 +238,22 @@ export function BoardCanvas({
     return [...list.filter((n) => n.type === 'frame'), ...list.filter((n) => n.type !== 'frame')]
   }, [flowNodes])
   const edges = flowEdges ?? []
+
+  // Report the current selection (id + type + label) up to the board page, so the
+  // AI panel can offer the selected objects as chat context.
+  const selectedIds = useMemo(
+    () => nodes.filter((n) => n.selected).map((n) => n.id).sort().join(','),
+    [nodes],
+  )
+  useEffect(() => {
+    onSelectionChange?.(
+      nodes
+        .filter((n) => n.selected)
+        .map((n) => ({ id: n.id, type: n.type ?? '', label: n.data?.label ?? '' })),
+    )
+    // `onSelectionChange` is a stable setState from the board page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIds])
 
   const setNodeLabel = (id: string, label: string) => {
     const node = getNode(id) as FlowNode | undefined
@@ -608,6 +629,35 @@ export function BoardCanvas({
     onFocusPanConsumed()
   }, [focusPan, setCenter, onFocusPanConsumed])
 
+  // Follow the AI agent: when it starts a new task somewhere off-screen, pan to it
+  // so you see its cursor and the result (it often works below existing content).
+  const agentCursor = useOthers((others) => {
+    const agent = others.find((other) => other.id === 'ai-agent')
+    const status = agent?.presence.aiStatus
+    return agent?.presence.cursor && status && status !== 'Done'
+      ? { ...agent.presence.cursor, status }
+      : null
+  }, shallow)
+  const followedStatus = useRef<string | null>(null)
+  useEffect(() => {
+    if (!agentCursor) {
+      followedStatus.current = null
+      return
+    }
+    if (followedStatus.current === agentCursor.status) return
+    followedStatus.current = agentCursor.status
+    const bounds = document.querySelector('.react-flow')?.getBoundingClientRect()
+    if (!bounds) return
+    const topLeft = screenToFlowPosition({ x: bounds.left, y: bounds.top })
+    const bottomRight = screenToFlowPosition({ x: bounds.right, y: bounds.bottom })
+    const visible =
+      agentCursor.x > topLeft.x &&
+      agentCursor.x < bottomRight.x &&
+      agentCursor.y > topLeft.y &&
+      agentCursor.y < bottomRight.y
+    if (!visible) setCenter(agentCursor.x + 150, agentCursor.y + 150, { duration: 600 })
+  }, [agentCursor, screenToFlowPosition, setCenter])
+
   // Shape tool: click places the default size, click-and-drag draws it to size.
   const [shapeDraft, setShapeDraft] = useState<ShapeDraft | null>(null)
   const shapeDraftRef = useRef<ShapeDraft | null>(null)
@@ -873,7 +923,7 @@ export function BoardCanvas({
             activeTool !== 'select' && 'opacity-30',
           )}
         >
-          <BoardEmptyState onSelectTemplate={applyTemplate} />
+          <BoardEmptyState onSelectTemplate={applyTemplate} onAskAi={onAskAi} />
         </div>
       ) : null}
 

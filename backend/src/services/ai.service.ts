@@ -9,7 +9,7 @@ const AI_USER_AVATAR = "";
 const MAX_TOKENS = 128_000;
 
 // The model is chosen here, server-side — the client never sends one.
-const DEFAULT_MODEL = "anthropic/claude-sonnet-5";
+const DEFAULT_MODEL = "anthropic/claude-opus-5";
 
 const SYSTEM_PROMPT =
   "You are a friendly, concise assistant on a collaborative canvas. " +
@@ -106,9 +106,10 @@ export const streamAiReply = async (input: {
   roomId: string;
   feedId: string;
   messages: ChatMessage[];
+  context?: string;
 }) => {
   const liveblocks = getLiveblocks();
-  const { roomId, feedId, messages } = input;
+  const { roomId, feedId, messages, context } = input;
   const streamKey = `${roomId}:${feedId}`;
   const abortController = new AbortController();
   activeStreams.set(streamKey, abortController);
@@ -155,7 +156,7 @@ export const streamAiReply = async (input: {
 
     try {
       if (Env.AI_GATEWAY_API_KEY) {
-        await streamRealReply(messages, update, roomId, abortController.signal);
+        await streamRealReply(messages, update, roomId, context, abortController.signal);
       } else {
         await streamMockReply(messages, update);
       }
@@ -176,22 +177,31 @@ async function streamRealReply(
   messages: ChatMessage[],
   update: UpdateFn,
   roomId: string,
+  context?: string,
   abortSignal?: AbortSignal,
 ) {
   // Lazily imported so the server still runs without an AI provider key.
   const { stepCountIs, streamText } = await import("ai");
 
+  const system = context
+    ? `${SYSTEM_PROMPT}\n\nThe user selected these objects on the board:\n${context}\n\n` +
+      "Words like \"this\", \"it\", \"change\", \"improve\" or \"make it better\" refer to these " +
+      "objects: change them in place using their ids (updateItems, moveItems, deleteItems, " +
+      "moveIntoFrame; to redraw a drawing, call drawPicture with frameId set to its frame's " +
+      "id). Only add new items when the user asks for something new."
+    : SYSTEM_PROMPT;
+
   const result = streamText({
-    // Bare gateway model ids (e.g. "anthropic/claude-sonnet-5") resolve through the
+    // Bare gateway model ids (e.g. "anthropic/claude-opus-5") resolve through the
     // Vercel AI Gateway when AI_GATEWAY_API_KEY is set.
     model: DEFAULT_MODEL as never,
-    system: SYSTEM_PROMPT,
+    system,
     messages,
     abortSignal,
     tools: buildBoardTools(roomId),
     // Allow several tool rounds per message (e.g. listBoardItems, then moveIntoFrame),
     // plus a final text reply. The default stops after the first tool call.
-    // No thinking options: Sonnet 5 thinks adaptively by default, and it rejects
+    // No thinking options: Opus 5 thinks adaptively by default, and it rejects
     // the old `budgetTokens` setting with a 400.
     stopWhen: stepCountIs(8),
   });

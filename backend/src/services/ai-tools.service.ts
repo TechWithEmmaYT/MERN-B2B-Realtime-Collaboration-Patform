@@ -582,22 +582,44 @@ export function buildBoardTools(roomId: string) {
         x: z.number().optional().describe("Where to place the drawing (top-left). Optional."),
         y: z.number().optional(),
         scale: z.number().min(0.3).max(4).optional().describe("Size multiplier, default 1."),
+        frameId: z
+          .string()
+          .optional()
+          .describe(
+            "To redraw or improve an existing drawing, pass its frame id: the old strokes " +
+              "are removed and the new drawing is made in that frame, in the same place.",
+          ),
       }),
-      execute: async ({ title, strokes, x, y, scale = 1 }) => {
-        const { nodes } = await readBoard(roomId);
-        const origin = x !== undefined && y !== undefined ? { x, y } : nextOrigin(nodes);
+      execute: async ({ title, strokes, x, y, scale = 1, frameId: existingFrameId }) => {
+        const { nodes, edges } = await readBoard(roomId);
+        const existing = existingFrameId
+          ? nodes.find((node) => node.id === existingFrameId && node.type === "frame")
+          : undefined;
+        const origin = existing
+          ? existing.position
+          : x !== undefined && y !== undefined
+            ? { x, y }
+            : nextOrigin(nodes);
         const padding = 30;
 
-        const frameId = randomUUID();
+        const frameId = existing?.id ?? randomUUID();
         const frame: BoardNode = {
+          ...existing,
           id: frameId,
           type: "frame",
           position: origin,
           width: 300 * scale + padding * 2,
           height: 300 * scale + padding * 2,
           zIndex: -1,
-          data: { label: title, color: "#FFFFFF" },
+          data: { ...existing?.data, label: title, color: existing?.data?.color ?? "#FFFFFF" },
         };
+        // Redrawing: clear the frame's old contents (and edges touching them) first.
+        const oldChildren = existing
+          ? nodes.filter((node) => node.parentId === frameId).map((node) => node.id)
+          : [];
+        const oldEdges = edges
+          .filter((edge) => oldChildren.includes(edge.source) || oldChildren.includes(edge.target))
+          .map((edge) => edge.id);
 
         // One path node per stroke; points are stored relative to the stroke's box,
         // exactly like strokes drawn by hand with the Draw tool.
@@ -630,6 +652,7 @@ export function buildBoardTools(roomId: string) {
           `Drawing ${title.toLowerCase().startsWith("a ") ? title : `a ${title.toLowerCase()}`}…`,
           { x: origin.x + padding, y: origin.y + padding },
           async (moveCursor) => {
+            if (oldChildren.length) await removeFromBoard(roomId, oldChildren, oldEdges);
             await writeBoard(roomId, [frame], []);
             for (const path of paths) {
               await moveCursor({

@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router'
 import { AppLayout } from '@/layouts/app-layout'
 import SignInPage from '@/pages/auth/sign-in'
 import SignUpPage from '@/pages/auth/sign-up'
+import LandingPage from '@/pages/landing/landing-page'
 import InvitePage from '@/pages/invite/invite-page'
 import { BoardPage } from '@/pages/board/board-page'
 import { DashboardHomePage } from '@/pages/dashboard/dashboard-home'
@@ -17,7 +18,7 @@ import { ProtectedRoute } from '@/routes/protected-route'
 import { PublicRoute } from '@/routes/public-route'
 
 export const router = createBrowserRouter([
-  { path: '/', element: <Navigate to="/dashboard" replace /> },
+  { path: '/', element: <LandingPage /> },
   { path: '/invite/:token', element: <InvitePage /> },
   {
     element: <PublicRoute />,

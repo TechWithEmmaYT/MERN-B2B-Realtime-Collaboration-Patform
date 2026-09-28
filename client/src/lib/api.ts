@@ -265,14 +265,16 @@ export const aiChatMutationFn = async ({
   boardId,
   feedId,
   messages,
+  context,
 }: {
   boardId: string
   feedId: string
   messages: { role: 'user' | 'assistant'; content: string }[]
+  context?: string
 }) => {
   const { data } = await API.post<ApiSuccessResponse<{ accepted: boolean }>>(
     `/ai/boards/${boardId}/chat`,
-    { feedId, messages },
+    { feedId, messages, context },
   )
   return data.data
 }

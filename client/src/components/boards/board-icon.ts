@@ -3,6 +3,7 @@ import {
   LayoutDashboardIcon,
   MapIcon,
   MessageCircleMoreIcon,
+  RocketIcon,
   ShapesIcon,
 } from 'lucide-react'
 import type { ComponentType } from 'react'
@@ -32,6 +33,10 @@ const templateIcons: Record<BoardTemplateId, BoardIconInfo> = {
   journey: {
     icon: MapIcon,
     iconClass: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400',
+  },
+  launch: {
+    icon: RocketIcon,
+    iconClass: 'bg-rose-50 text-rose-500 dark:bg-rose-500/15 dark:text-rose-400',
   },
 }
 

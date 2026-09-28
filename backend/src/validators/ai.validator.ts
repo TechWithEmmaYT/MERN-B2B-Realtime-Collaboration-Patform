@@ -10,6 +10,8 @@ export const aiChatSchema = z.object({
       }),
     )
     .max(100),
+  // The canvas objects the user selected, so the agent can act on them.
+  context: z.string().max(20_000).optional(),
 });
 
 export const stopAiChatSchema = z.object({
