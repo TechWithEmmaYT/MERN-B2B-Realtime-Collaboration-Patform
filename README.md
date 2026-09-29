@@ -3,10 +3,12 @@
 > This code, whether in parts or whole, is licensed for commercial use **only with a license**. It is **free for personal use**.
 > 👉 [Click here to obtain license](https://techwithemma.gumroad.com/l/huytmd) and 👉 [here to learn more](./TECHWITHEMMA-LICENSE.md)
 
+
 ## ⚡ Built with Command Code
 
 This project was built with the help of **Command Code**, an AI coding agent. Give it a try:
 👉 [Try Command Code](https://commandcode.ai/?utm_source=youtube&utm_medium=techwithemmaofficial&utm_campaign=ccgtmviddesktop33)
+
 
 ## ❤️ Support the Channel
 

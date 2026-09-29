@@ -152,8 +152,10 @@ function AppShell({ workspaceId }: { workspaceId: string | undefined }) {
                               : 'text-foreground/80 hover:bg-muted hover:text-foreground',
                           )}
                         >
+                          {/* Selects the team on Home (its boards; new boards go
+                              into it). The team page is in the ⋯ menu. */}
                           <Link
-                            to={`${base}/teams/${team.id}`}
+                            to={`${base}?team=${team.id}`}
                             aria-current={active ? 'page' : undefined}
                             className="flex min-w-0 flex-1 items-center gap-2.5"
                           >
@@ -228,6 +230,9 @@ function TeamActions({ team, workspaceId }: { team: Team; workspaceId: string | 
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-44">
+        <DropdownMenuItem onSelect={() => navigate(`/dashboard/org/${workspaceId}/teams/${team.id}`)}>
+          Open team page
+        </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={() => navigate(`/dashboard/org/${workspaceId}/teams/${team.id}?tab=members`)}
         >
